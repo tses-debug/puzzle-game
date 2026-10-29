@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>繪本互動拼圖闖關</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: #2c3e50; }
+        .screen {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            display: none;
+            text-align: center;
+        }
+        .active { display: block; }
+        .form-group {
+            margin: 15px 0;
+            text-align: left;
+        }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #34495e; }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #2980b9; }
+        .btn-green { background-color: #2ecc71; }
+        .btn-green:hover { background-color: #27ae60; }
+        .btn-gray { background-color: #95a5a6; }
+        
+        #game-container {
+            position: relative;
+            margin: 20px auto;
+            border: 4px solid #34495e;
+            border-radius: 10px;
+            background-color: #ecf0f1;
+            overflow: hidden;
+        }
+        canvas { display: block; touch-action: none; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #bdc3c7;
+            padding: 10px;
+            text-align: center;
+        }
+        th { background-color: #3498db; color: white; }
+    </style>
+</head>
+<body>
+
+    <!-- 登入與設定畫面 -->
+    <div id="login-screen" class="screen active">
+        <h1>🎨 繪本拼圖挑戰</h1>
+        <div class="form-group">
+            <label>選擇班級</label>
+            <select id="class-select">
+                <option value="一年甲班">一年甲班</option>
+                <option value="二年甲班">二年甲班</option>
+                <option value="三年甲班">三年甲班</option>
+                <option value="三年乙班">三年乙班</option>
+                <option value="四年甲班">四年甲班</option>
+                <option value="五年甲班">五年甲班</option>
+                <option value="六年甲班">六年甲班</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>輸入姓名</label>
+            <input type="text" id="student-name" placeholder="請輸入你的名字" required>
+        </div>
+        <div class="form-group">
+            <label>選擇難度</label>
+            <select id="difficulty-select">
+                <option value="4">低年級 (16片)</option>
+                <option value="5">中年級 (25片)</option>
+                <option value="6">高年級 (36片)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>選擇拼圖</label>
+            <select id="image-select">
+                <option value="12婆姐.jpg">12婆姐</option>
+                <option value="拼被人去旅行.jpg">拼被人去旅行</option>
+                <option value="少年西拉雅.jpg">少年西拉雅</option>
+                <option value="外婆住在香水村.jpg">外婆住在香水村</option>
+                <option value="橡皮頭蹦太郎.jpg">橡皮頭蹦太郎</option>
+                <option value="獨眼貓.jpg">獨眼貓</option>
+                <option value="洪通繪畫無師自通.jpg">洪通繪畫無師自通</option>
+                <option value="海之生.jpg">海之生</option>
+                <option value="曾文溪的故事.jpg">曾文溪的故事</option>
+                <option value="小兔彼得的故事.jpg">小兔彼得的故事</option>
+            </select>
+        </div>
+        <button onclick="startGame()">開始闖關</button>
+        <br><br><hr><br>
+        <button class="btn-gray" onclick="showDashboard()">👨‍🏫 教師後台 (查看成績)</button>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <div id="game-screen" class="screen">
+        <h2 id="game-title">拼圖遊戲</h2>
+        <button class="btn-gray" onclick="saveAndExit()">💾 存檔並回首頁</button>
+        <div id="game-container">
+            <canvas id="puzzle-canvas"></canvas>
+        </div>
+        <div id="loading-msg">圖片載入中，請稍候...</div>
+    </div>
+
+    <!-- 教師後台畫面 -->
+    <div id="dashboard-screen" class="screen">
+        <h2>👨‍🏫 過關紀錄名單</h2>
+        <button class="btn-gray" onclick="showLogin()">返回首頁</button>
+        <button class="btn-gray" onclick="clearRecords()">清空紀錄</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>班級</th>
+                    <th>姓名</th>
+                    <th>完成拼圖</th>
+                    <th>片數</th>
+                    <th>完成時間</th>
+                </tr>
+            </thead>
+            <tbody id="records-body">
+                <!-- 紀錄將由 JS 動態生成 -->
+            </tbody>
+        </table>
+    </div>
+
+<script>
+    let canvas = document.getElementById('puzzle-canvas');
+    let ctx = canvas.getContext('2d');
+    let img = new Image();
+    
+    let pieces = [];
+    let cols, rows;
+    let pieceWidth, pieceHeight;
+    let selectedPiece = null;
+    let isDragging = false;
+    
+    let currentUser = {};
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function showLogin() { switchScreen('login-screen'); }
+
+    function showDashboard() {
+        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
+        let tbody = document.getElementById('records-body');
+        tbody.innerHTML = '';
+        records.forEach(r => {
+            tbody.innerHTML += `<tr><td>${r.className}</td><td>${r.name}</td><td>${r.puzzle}</td><td>${r.difficulty}</td><td>${r.date}</td></tr>`;
+        });
+        switchScreen('dashboard-screen');
+    }
+
+    function clearRecords() {
+        if(confirm('確定要清空所有紀錄嗎？')) {
+            localStorage.removeItem('puzzleRecords');
+            showDashboard();
+        }
+    }
+
+    function startGame() {
+        let name = document.getElementById('student-name').value.trim();
+        if (!name) return alert('請輸入姓名！');
+
+        currentUser = {
+            className: document.getElementById('class-select').value,
+            name: name,
+            gridSize: parseInt(document.getElementById('difficulty-select').value),
+            imageName: document.getElementById('image-select').value,
+            puzzleName: document.getElementById('image-select').options[document.getElementById('image-select').selectedIndex].text
+        };
+
+        document.getElementById('game-title').innerText = currentUser.puzzleName + ' - 拼圖中...';
+        switchScreen('game-screen');
+        
+        img.onload = () => {
+            document.getElementById('loading-msg').style.display = 'none';
+            initPuzzle();
+        };
+        img.onerror = () => {
+            alert('找不到圖片檔：' + currentUser.imageName + '。請確認圖片是否與網頁放在同一個資料夾。');
+            showLogin();
+        };
+        document.getElementById('loading-msg').style.display = 'block';
+        img.src = currentUser.imageName;
+    }
+
+    function initPuzzle() {
+        let maxWidth = window.innerWidth > 800 ? 800 : window.innerWidth - 60;
+        let scale = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scale;
+        
+        cols = currentUser.gridSize;
+        rows = currentUser.gridSize;
+        pieceWidth = canvas.width / cols;
+        pieceHeight = canvas.height / rows;
+
+        let savedData = JSON.parse(localStorage.getItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName));
+        
+        if (savedData && savedData.gridSize === currentUser.gridSize) {
+            pieces = savedData.pieces;
+        } else {
+            createPieces();
+            shufflePieces();
+        }
+        
+        drawAll();
+        setupEvents();
+    }
+
+    function createPieces() {
+        pieces = [];
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                // 為了簡單且穩定，這裡採用方塊加上內部縮放來模擬拼圖邏輯
+                // (若要實作完美貝茲曲線凹凸會過於龐大，此處以輕量化幾何拼圖呈現)
+                pieces.push({
+                    correctX: x * pieceWidth,
+                    correctY: y * pieceHeight,
+                    currentX: 0,
+                    currentY: 0,
+                    w: pieceWidth,
+                    h: pieceHeight,
+                    col: x,
+                    row: y,
+                    isLocked: false
+                });
+            }
+        }
+    }
+
+    function shufflePieces() {
+        pieces.forEach(p => {
+            p.currentX = Math.random() * (canvas.width - pieceWidth);
+            p.currentY = Math.random() * (canvas.height - pieceHeight);
+            p.isLocked = false;
+        });
+    }
+
+    function drawAll() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 畫底圖浮水印 (輔助)
+        ctx.globalAlpha = 0.2;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+
+        // 畫拼圖塊
+        pieces.forEach(p => {
+            if (p !== selectedPiece) drawPiece(p);
+        });
+        // 被選取的畫在最上層
+        if (selectedPiece) drawPiece(selectedPiece);
+    }
+
+    function drawPiece(p) {
+        ctx.save();
+        ctx.beginPath();
+        // 畫一個有圓角或微凹凸感的方塊邊界
+        ctx.rect(p.currentX, p.currentY, p.w, p.h);
+        ctx.clip();
+
+        // 擷取原始圖片對應的位置
+        let sx = p.col * (img.width / cols);
+        let sy = p.row * (img.height / rows);
+        let sw = img.width / cols;
+        let sh = img.height / rows;
+
+        ctx.drawImage(img, sx, sy, sw, sh, p.currentX, p.currentY, p.w, p.h);
+        
+        // 畫邊框
+        ctx.lineWidth = p.isLocked ? 1 : 2;
+        ctx.strokeStyle = p.isLocked ? 'rgba(0,0,0,0.1)' : '#fff';
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function setupEvents() {
+        canvas.onmousedown = handleDown;
+        canvas.onmousemove = handleMove;
+        canvas.onmouseup = handleUp;
+        canvas.onmouseleave = handleUp;
+
+        canvas.ontouchstart = (e) => { e.preventDefault(); handleDown(e.touches[0]); };
+        canvas.ontouchmove = (e) => { e.preventDefault(); handleMove(e.touches[0]); };
+        canvas.ontouchend = (e) => { e.preventDefault(); handleUp(); };
+    }
+
+    function handleDown(e) {
+        let rect = canvas.getBoundingClientRect();
+        let mouseX = e.clientX - rect.left;
+        let mouseY = e.clientY - rect.top;
+
+        // 從陣列最後面倒找，確保點擊到最上層的拼圖
+        for (let i = pieces.length - 1; i >= 0; i--) {
+            let p = pieces[i];
+            if (!p.isLocked && mouseX >= p.currentX && mouseX <= p.currentX + p.w &&
+                mouseY >= p.currentY && mouseY <= p.currentY + p.h) {
+                selectedPiece = p;
+                isDragging = true;
+                // 將選取的拼圖移到陣列最後面 (顯示在最上層)
+                pieces.splice(i, 1);
+                pieces.push(selectedPiece);
+                break;
+            }
+        }
+    }
+
+    function handleMove(e) {
+        if (!isDragging || !selectedPiece) return;
+        let rect = canvas.getBoundingClientRect();
+        selectedPiece.currentX = e.clientX - rect.left - (pieceWidth / 2);
+        selectedPiece.currentY = e.clientY - rect.top - (pieceHeight / 2);
+        drawAll();
+    }
+
+    function handleUp() {
+        if (!isDragging || !selectedPiece) return;
+        
+        // 檢查是否接近正確位置 (吸附效果)
+        let diffX = Math.abs(selectedPiece.currentX - selectedPiece.correctX);
+        let diffY = Math.abs(selectedPiece.currentY - selectedPiece.correctY);
+        
+        if (diffX < pieceWidth * 0.2 && diffY < pieceHeight * 0.2) {
+            selectedPiece.currentX = selectedPiece.correctX;
+            selectedPiece.currentY = selectedPiece.correctY;
+            selectedPiece.isLocked = true;
+        }
+
+        isDragging = false;
+        selectedPiece = null;
+        drawAll();
+        checkWin();
+    }
+
+    function checkWin() {
+        let isWin = pieces.every(p => p.isLocked);
+        if (isWin) {
+            setTimeout(() => {
+                alert('🎉 恭喜過關！你的紀錄已經儲存囉！');
+                saveRecord();
+                // 清除暫存進度
+                localStorage.removeItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
+                showLogin();
+            }, 300);
+        }
+    }
+
+    function saveAndExit() {
+        // 存檔供下次繼續
+        let saveData = {
+            gridSize: currentUser.gridSize,
+            pieces: pieces
+        };
+        localStorage.setItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName, JSON.stringify(saveData));
+        alert('進度已儲存！下次用相同姓名選擇此圖片即可繼續。');
+        showLogin();
+    }
+
+    function saveRecord() {
+        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
+        let now = new Date();
+        records.push({
+            className: currentUser.className,
+            name: currentUser.name,
+            puzzle: currentUser.puzzleName,
+            difficulty: (currentUser.gridSize * currentUser.gridSize) + '片',
+            date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+        });
+        localStorage.setItem('puzzleRecords', JSON.stringify(records));
+    }
+</script>
+
+</body>
+</html>
