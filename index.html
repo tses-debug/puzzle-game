@@ -119,6 +119,7 @@
     <!-- 登入與設定畫面 -->
     <div id="login-screen" class="screen active">
         <h1>🎨 繪本真實拼圖挑戰</h1>
+        
         <div class="form-group">
             <label>選擇班級</label>
             <select id="class-select" onchange="updateAvailablePuzzles()">
@@ -131,10 +132,12 @@
                 <option value="六年甲班">六年甲班</option>
             </select>
         </div>
+
         <div class="form-group">
             <label>輸入姓名</label>
             <input type="text" id="student-name" placeholder="請輸入你的名字" oninput="updateAvailablePuzzles()" required>
         </div>
+
         <div class="form-group">
             <label>選擇難度</label>
             <select id="difficulty-select" onchange="updateAvailablePuzzles()">
@@ -143,12 +146,14 @@
                 <option value="6">高年級 (36片)</option>
             </select>
         </div>
+
         <div class="form-group">
             <label>選擇拼圖</label>
             <select id="image-select">
-                <!-- 由 JavaScript 自動更新並動態過濾已完成題目 -->
+                <!-- 由 JavaScript 自動寫入選單 -->
             </select>
         </div>
+
         <button id="start-btn" onclick="startGame()">開始闖關</button>
         <br><br><hr><br>
         <button class="btn-gray" onclick="showDashboard()">👨‍🏫 教師後台</button>
@@ -195,7 +200,6 @@
     </div>
 
 <script>
-    // 原始完整的 10 張拼圖清單
     const allPuzzles = [
         { file: '12婆姐.jpg', title: '12婆姐' },
         { file: '拼被人去旅行.jpg', title: '拼被人去旅行' },
@@ -224,10 +228,10 @@
     let currentUser = {};
     let isCompleted = false;
 
-    // 頁面初始化
-    window.onload = function() {
+    // 確保頁面載入完成後立即填入圖片選單
+    document.addEventListener('DOMContentLoaded', function() {
         updateAvailablePuzzles();
-    };
+    });
 
     function switchScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -239,7 +243,6 @@
         switchScreen('login-screen'); 
     }
 
-    // 根據姓名與班級動態更新未完成的拼圖選單
     function updateAvailablePuzzles() {
         let name = document.getElementById('student-name').value.trim();
         let className = document.getElementById('class-select').value;
@@ -248,14 +251,15 @@
         
         let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
         
-        // 找出該學生在當前班級已完成的拼圖名稱
-        let completedTitles = records
-            .filter(r => r.name === name && r.className === className)
-            .map(r => r.puzzle);
+        // 如果學生未輸入名字，預設顯示所有 10 張拼圖
+        let completedTitles = [];
+        if (name !== '') {
+            completedTitles = records
+                .filter(r => r.name === name && r.className === className)
+                .map(r => r.puzzle);
+        }
 
         selectEl.innerHTML = '';
-
-        // 過濾出尚未完成的拼圖
         let available = allPuzzles.filter(p => !completedTitles.includes(p.title));
 
         if (available.length === 0 && name !== '') {
@@ -507,103 +511,4 @@
         canvas.onmousemove = handleMove;
         canvas.onmouseup = handleUp;
         canvas.onmouseleave = handleUp;
-        canvas.ontouchstart = (e) => { e.preventDefault(); handleDown(e.touches[0]); };
-        canvas.ontouchmove = (e) => { e.preventDefault(); handleMove(e.touches[0]); };
-        canvas.ontouchend = (e) => { e.preventDefault(); handleUp(); };
-    }
-
-    function handleDown(e) {
-        if (isCompleted) return;
-        let rect = canvas.getBoundingClientRect();
-        let scaleX = canvas.width / rect.width;
-        let scaleY = canvas.height / rect.height;
-        let mouseX = (e.clientX - rect.left) * scaleX;
-        let mouseY = (e.clientY - rect.top) * scaleY;
-
-        for (let i = pieces.length - 1; i >= 0; i--) {
-            let p = pieces[i];
-            if (!p.isLocked && mouseX >= p.currentX && mouseX <= p.currentX + p.w &&
-                mouseY >= p.currentY && mouseY <= p.currentY + p.h) {
-                selectedPiece = p;
-                isDragging = true;
-                pieces.splice(i, 1);
-                pieces.push(selectedPiece);
-                break;
-            }
-        }
-    }
-
-    function handleMove(e) {
-        if (!isDragging || !selectedPiece || isCompleted) return;
-        let rect = canvas.getBoundingClientRect();
-        let scaleX = canvas.width / rect.width;
-        let scaleY = canvas.height / rect.height;
-        
-        selectedPiece.currentX = (e.clientX - rect.left) * scaleX - (pieceWidth / 2);
-        selectedPiece.currentY = (e.clientY - rect.top) * scaleY - (pieceHeight / 2);
-        drawAll();
-    }
-
-    function handleUp() {
-        if (!isDragging || !selectedPiece || isCompleted) return;
-        
-        let diffX = Math.abs(selectedPiece.currentX - selectedPiece.correctX);
-        let diffY = Math.abs(selectedPiece.currentY - selectedPiece.correctY);
-        
-        if (diffX < pieceWidth * 0.25 && diffY < pieceHeight * 0.25) {
-            selectedPiece.currentX = selectedPiece.correctX;
-            selectedPiece.currentY = selectedPiece.correctY;
-            selectedPiece.isLocked = true;
-        }
-
-        isDragging = false;
-        selectedPiece = null;
-        drawAll();
-        checkWin();
-    }
-
-    function checkWin() {
-        if (pieces.every(p => p.isLocked)) {
-            isCompleted = true;
-            drawAll();
-            
-            saveRecord();
-            localStorage.removeItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
-
-            setTimeout(() => {
-                document.getElementById('win-msg').innerText = `${currentUser.className} ${currentUser.name}，恭喜完成《${currentUser.puzzleName}》！`;
-                document.getElementById('win-modal').style.display = 'flex';
-            }, 300);
-        }
-    }
-
-    function closeWinModal() {
-        document.getElementById('win-modal').style.display = 'none';
-        showLogin();
-    }
-
-    function saveAndExit() {
-        if (!isCompleted) {
-            let saveData = { gridSize: currentUser.gridSize, pieces: pieces };
-            localStorage.setItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName, JSON.stringify(saveData));
-            alert('進度已儲存！下次使用相同姓名與圖片即可繼續。');
-        }
-        showLogin();
-    }
-
-    function saveRecord() {
-        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
-        let now = new Date();
-        records.push({
-            className: currentUser.className,
-            name: currentUser.name,
-            puzzle: currentUser.puzzleName,
-            difficulty: (currentUser.gridSize * currentUser.gridSize) + '片',
-            date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
-        });
-        localStorage.setItem('puzzleRecords', JSON.stringify(records));
-    }
-</script>
-
-</body>
-</html>
+        canvas.ontouchstart = (e
