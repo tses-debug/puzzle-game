@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>繪本插畫拼圖挑戰</title>
+    <!-- 引入圓潤活潑的卡通字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
         /* 整體背景與字體配置 */
         body { 
@@ -18,23 +20,22 @@
             box-sizing: border-box; 
         }
 
-        /* 👑 改良版：活潑彈跳感大標題 (深色粗邊框、字體更粗壯) */
+        /* 👑 完美還原參考圖的活潑大標題 */
         .bouncy-title {
             text-align: center;
             margin: 20px 0 10px 0;
-            font-size: clamp(42px, 9vw, 72px); /* 稍微再放大一點點 */
-            font-weight: 900;
+            font-size: clamp(45px, 10vw, 75px); /* 放大字體 */
             white-space: nowrap;
         }
         .bouncy-title span {
             display: inline-block;
             color: var(--c);
-            -webkit-text-stroke: 3px #2B2A4C; /* 改為深藍色外框，強烈對比 */
-            paint-order: stroke fill; /* 讓邊框往外長，不吃掉字體厚度 */
-            filter: drop-shadow(0px 8px 0px #2B2A4C); /* 加深立體陰影 */
+            /* 使用剛載入的卡通字體 */
+            font-family: 'ZCOOL KuaiLe', 'Comic Sans MS', sans-serif;
+            font-weight: 400; /* 此字體本身已經很粗 */
+            text-shadow: 4px 6px 0px #2B2A4C; /* 實心深藍色右下陰影 */
             transform: rotate(var(--r)); 
             margin: 0 2px;
-            font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', 'Microsoft JhengHei', sans-serif;
             letter-spacing: 2px;
         }
 
@@ -142,15 +143,16 @@
 <body>
 
     <!-- 1. 首頁畫面 -->
+    <!-- 套用與參考圖完全一致的：粉、黃、綠、紫、橘、粉、黃、綠 -->
     <h1 class="bouncy-title">
-        <span style="--c:#FF6B81; --r:-6deg;">繪</span>
-        <span style="--c:#2ED573; --r:4deg;">本</span>
-        <span style="--c:#A29BFE; --r:-3deg;">插</span>
-        <span style="--c:#FFA502; --r:5deg;">畫</span>
-        <span style="--c:#FF4757; --r:-5deg;">拼</span>
-        <span style="--c:#1E90FF; --r:3deg;">圖</span>
-        <span style="--c:#FF7F50; --r:-4deg;">挑</span>
-        <span style="--c:#7BED9F; --r:6deg;">戰</span>
+        <span style="--c:#FF5A79; --r:-6deg;">繪</span>
+        <span style="--c:#FFC312; --r:4deg;">本</span>
+        <span style="--c:#1DD1A1; --r:-3deg;">插</span>
+        <span style="--c:#9980FA; --r:5deg;">畫</span>
+        <span style="--c:#FF9F43; --r:-5deg;">拼</span>
+        <span style="--c:#FF5A79; --r:3deg;">圖</span>
+        <span style="--c:#FFC312; --r:-4deg;">挑</span>
+        <span style="--c:#1DD1A1; --r:6deg;">戰</span>
     </h1>
     <p class="subtitle">完成拼圖、答對書名，就能得到一個章。<br>集滿10 個章，即可兌換榮譽券！</p>
 
@@ -245,7 +247,6 @@
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
         
-        // 隱藏/顯示首頁的標題與副標題
         let isHome = (screenId === 'login-screen');
         document.querySelector('h1').style.display = isHome ? 'block' : 'none';
         document.querySelector('.subtitle').style.display = isHome ? 'block' : 'none';
