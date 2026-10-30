@@ -9,35 +9,51 @@
         h1 { color: #2c3e50; font-size: 24px; margin: 10px 0; }
         .screen { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 800px; width: 100%; display: none; text-align: center; box-sizing: border-box; }
         .active { display: block; }
+        
         #game-screen { display: none; flex-direction: column; width: 100%; height: 98vh; max-width: 1200px; padding: 10px; }
         #game-screen.active { display: flex; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .header-bar h2 { margin: 0; font-size: 20px; }
+        .header-bar h2 { margin: 0; font-size: 20px; color: #2c3e50; }
+        
         .form-group { margin: 15px 0; text-align: left; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #34495e; }
         select, input { width: 100%; padding: 10px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
-        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin: 5px; }
         button:hover { background-color: #2980b9; }
-        .btn-green { background-color: #2ecc71; }
+        .btn-green { background-color: #2ecc71; font-size: 18px; padding: 12px 25px; }
         .btn-green:hover { background-color: #27ae60; }
         .btn-gray { background-color: #95a5a6; }
+        .btn-gray:hover { background-color: #7f8c8d; }
+        
         #game-container { flex-grow: 1; position: relative; border: 4px solid #34495e; border-radius: 10px; background-color: #ecf0f1; overflow: hidden; width: 100%; }
         canvas { display: block; touch-action: none; width: 100%; height: 100%; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: center; }
         th { background-color: #3498db; color: white; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-width: 400px; width: 85%; animation: popIn 0.3s ease-out; }
+        
+        /* 集章卡樣式 */
+        .stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin: 20px 0; }
+        .stamp-slot { background: #fdfefe; border: 3px dashed #bdc3c7; border-radius: 10px; padding: 15px 5px; font-size: 14px; font-weight: bold; color: #7f8c8d; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; transition: 0.3s; }
+        .stamp-slot.completed { border: 3px solid #f1c40f; background: #fffde7; color: #d35400; box-shadow: 0 4px 6px rgba(241, 196, 15, 0.2); }
+        .stamp-icon { font-size: 32px; margin-bottom: 5px; }
+        
+        /* 彈視窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-width: 450px; width: 90%; animation: popIn 0.3s ease-out; }
+        .quiz-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .quiz-options button { background-color: #f39c12; font-size: 16px; padding: 12px; }
+        .quiz-options button:hover { background-color: #e67e22; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
+    <!-- 1. 登入畫面 -->
     <div id="login-screen" class="screen active">
         <h1>🎨 繪本真實拼圖挑戰</h1>
         <div class="form-group">
             <label>選擇班級</label>
-            <select id="class-select" onchange="updateAvailablePuzzles()">
+            <select id="class-select">
                 <option value="一年甲班">一年甲班</option>
                 <option value="二年甲班">二年甲班</option>
                 <option value="三年甲班">三年甲班</option>
@@ -49,28 +65,27 @@
         </div>
         <div class="form-group">
             <label>輸入姓名</label>
-            <input type="text" id="student-name" placeholder="請輸入你的名字" oninput="updateAvailablePuzzles()" required>
+            <input type="text" id="student-name" placeholder="請輸入你的名字" required>
         </div>
-        <div class="form-group">
-            <label>選擇難度</label>
-            <select id="difficulty-select" onchange="updateAvailablePuzzles()">
-                <option value="4">低年級 (16片)</option>
-                <option value="5">中年級 (25片)</option>
-                <option value="6">高年級 (36片)</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>選擇拼圖</label>
-            <select id="image-select"></select>
-        </div>
-        <button id="start-btn" onclick="startGame()">開始闖關</button>
+        <button class="btn-green" onclick="enterStampCard()">進入我的集章卡</button>
         <br><br><hr><br>
         <button class="btn-gray" onclick="showDashboard()">👨‍🏫 教師後台</button>
     </div>
 
+    <!-- 2. 集章卡畫面 -->
+    <div id="stamp-screen" class="screen">
+        <h2 id="stamp-title">我的集章卡</h2>
+        <div class="stamp-grid" id="stamp-grid">
+            <!-- 由 JS 動態生成 -->
+        </div>
+        <button id="draw-puzzle-btn" class="btn-green" onclick="startRandomPuzzle()">🎲 抽取下一關</button>
+        <button class="btn-gray" onclick="switchScreen('login-screen')">返回登入</button>
+    </div>
+
+    <!-- 3. 遊戲畫面 -->
     <div id="game-screen" class="screen">
         <div class="header-bar">
-            <h2 id="game-title">拼圖中...</h2>
+            <h2 id="game-title">❓ 神秘拼圖挑戰中...</h2>
             <button class="btn-gray" onclick="saveAndExit()">💾 存檔離開</button>
         </div>
         <div id="loading-msg">圖片載入中...</div>
@@ -79,40 +94,36 @@
         </div>
     </div>
 
+    <!-- 4. 教師後台畫面 -->
     <div id="dashboard-screen" class="screen">
         <h2>👨‍🏫 過關紀錄名單</h2>
-        <button class="btn-gray" onclick="showLogin()">返回首頁</button>
+        <button class="btn-gray" onclick="switchScreen('login-screen')">返回首頁</button>
         <button class="btn-gray" onclick="clearRecords()">清空紀錄</button>
         <table>
-            <thead><tr><th>班級</th><th>姓名</th><th>完成拼圖</th><th>難度</th><th>完成時間</th></tr></thead>
+            <thead><tr><th>班級</th><th>姓名</th><th>獲得印章 (書名)</th><th>難度</th><th>完成時間</th></tr></thead>
             <tbody id="records-body"></tbody>
         </table>
     </div>
 
-    <div id="win-modal" class="modal">
+    <!-- 5. 過關測驗彈視窗 -->
+    <div id="quiz-modal" class="modal">
         <div class="modal-content">
-            <h2>🎉 太棒了！挑戰成功！</h2>
-            <p id="win-msg">你已經成功完成囉！</p>
-            <button class="btn-green" onclick="closeWinModal()">確定並返回首頁</button>
+            <h2>🎉 拼圖完成！</h2>
+            <p>請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
+            <div class="quiz-options" id="quiz-options-container">
+                <!-- 選項由 JS 生成 -->
+            </div>
+            <p id="quiz-feedback" style="color: #e74c3c; font-weight: bold; min-height: 24px; margin-top: 10px;"></p>
         </div>
     </div>
 
 <script>
-    // --- 安全存儲機制 (防止 Google Sites 阻擋 localStorage 導致當機) ---
+    // --- 安全存儲機制 ---
     let memoryStorage = {};
-    function safeGetItem(key) {
-        try { return localStorage.getItem(key) || memoryStorage[key] || null; } 
-        catch (e) { return memoryStorage[key] || null; }
-    }
-    function safeSetItem(key, value) {
-        try { localStorage.setItem(key, value); } 
-        catch (e) { memoryStorage[key] = value; }
-    }
-    function safeRemoveItem(key) {
-        try { localStorage.removeItem(key); } 
-        catch (e) { delete memoryStorage[key]; }
-    }
-    // -----------------------------------------------------------
+    function safeGetItem(key) { try { return localStorage.getItem(key) || memoryStorage[key] || null; } catch(e) { return memoryStorage[key] || null; } }
+    function safeSetItem(key, value) { try { localStorage.setItem(key, value); } catch(e) { memoryStorage[key] = value; } }
+    function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) { delete memoryStorage[key]; } }
+    // -------------------
 
     const allPuzzles = [
         { file: '12婆姐.jpg', title: '12婆姐' },
@@ -147,86 +158,95 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    function showLogin() { 
-        updateAvailablePuzzles();
-        switchScreen('login-screen'); 
+    // 自動判斷難度 (1~2年級=4x4, 3~4年級=5x5, 5~6年級=6x6)
+    function determineGridSize(className) {
+        if (className.includes('一年') || className.includes('二年')) return 4;
+        if (className.includes('三年') || className.includes('四年')) return 5;
+        return 6; 
     }
 
-    function updateAvailablePuzzles() {
+    function enterStampCard() {
         let name = document.getElementById('student-name').value.trim();
+        if (!name) return alert('請先輸入姓名！');
         let className = document.getElementById('class-select').value;
-        let selectEl = document.getElementById('image-select');
-        let startBtn = document.getElementById('start-btn');
         
-        let recordsData = safeGetItem('puzzleRecords');
-        let records = recordsData ? JSON.parse(recordsData) : [];
-        
-        let completedTitles = [];
-        if (name !== '') {
-            completedTitles = records.filter(r => r.name === name && r.className === className).map(r => r.puzzle);
-        }
-
-        selectEl.innerHTML = '';
-        let available = allPuzzles.filter(p => !completedTitles.includes(p.title));
-
-        if (available.length === 0 && name !== '') {
-            let opt = document.createElement('option');
-            opt.innerText = '🎉 本班級該生拼圖已全部完成！';
-            opt.value = '';
-            selectEl.appendChild(opt);
-            selectEl.disabled = true;
-            startBtn.disabled = true;
-        } else {
-            selectEl.disabled = false;
-            startBtn.disabled = false;
-            available.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p.file;
-                opt.innerText = p.title;
-                selectEl.appendChild(opt);
-            });
-        }
-    }
-
-    function showDashboard() {
-        let recordsData = safeGetItem('puzzleRecords');
-        let records = recordsData ? JSON.parse(recordsData) : [];
-        let tbody = document.getElementById('records-body');
-        tbody.innerHTML = '';
-        records.forEach(r => {
-            tbody.innerHTML += `<tr><td>${r.className}</td><td>${r.name}</td><td>${r.puzzle}</td><td>${r.difficulty}</td><td>${r.date}</td></tr>`;
-        });
-        switchScreen('dashboard-screen');
-    }
-
-    function clearRecords() {
-        if(confirm('確定要清空所有過關紀錄嗎？')) {
-            safeRemoveItem('puzzleRecords');
-            showDashboard();
-        }
-    }
-
-    function startGame() {
-        let name = document.getElementById('student-name').value.trim();
-        if (!name) return alert('請輸入姓名！');
-
-        let selectEl = document.getElementById('image-select');
-        if (!selectEl.value) return alert('目前沒有可挑戰的拼圖題。');
-
-        isCompleted = false;
         currentUser = {
-            className: document.getElementById('class-select').value,
+            className: className,
             name: name,
-            gridSize: parseInt(document.getElementById('difficulty-select').value),
-            imageName: selectEl.value,
-            puzzleName: selectEl.options[selectEl.selectedIndex].text
+            gridSize: determineGridSize(className)
         };
 
-        document.getElementById('game-title').innerText = currentUser.puzzleName;
-        switchScreen('game-screen');
+        document.getElementById('stamp-title').innerText = `${className} ${name} 的集章卡`;
         
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let completedTitles = records.filter(r => r.name === name && r.className === className).map(r => r.puzzle);
+
+        let gridHtml = '';
+        allPuzzles.forEach(p => {
+            if (completedTitles.includes(p.title)) {
+                gridHtml += `<div class="stamp-slot completed"><div class="stamp-icon">🏅</div>${p.title}</div>`;
+            } else {
+                gridHtml += `<div class="stamp-slot locked"><div class="stamp-icon">🔒</div>未解鎖</div>`;
+            }
+        });
+        document.getElementById('stamp-grid').innerHTML = gridHtml;
+
+        let btn = document.getElementById('draw-puzzle-btn');
+        let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+        
+        if (completedTitles.length === allPuzzles.length) {
+            btn.innerText = "🎉 全部收集完成！";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#95a5a6";
+        } else if (savedDataStr) {
+            btn.innerText = "▶ 繼續未完成的關卡";
+            btn.disabled = false;
+            btn.style.backgroundColor = "#e67e22";
+        } else {
+            btn.innerText = "🎲 抽取神秘下一關";
+            btn.disabled = false;
+            btn.style.backgroundColor = "#2ecc71";
+        }
+
+        switchScreen('stamp-screen');
+    }
+
+    function startRandomPuzzle() {
+        isCompleted = false;
+        document.getElementById('game-title').innerText = "❓ 神秘拼圖挑戰中...";
+
+        // 檢查是否有未完成的存檔
+        let saveKey = `puzzleSave_${currentUser.className}_${currentUser.name}`;
+        let savedDataStr = safeGetItem(saveKey);
+
+        if (savedDataStr) {
+            let savedData = JSON.parse(savedDataStr);
+            currentUser.imageName = savedData.imageName;
+            currentUser.puzzleName = savedData.puzzleName;
+            loadAndStartCanvas();
+            return;
+        }
+
+        // 若無存檔，則隨機抽題
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let completedTitles = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).map(r => r.puzzle);
+        
+        let available = allPuzzles.filter(p => !completedTitles.includes(p.title));
+        if (available.length === 0) return alert('你已經獲得所有印章囉！');
+
+        let randomTarget = available[Math.floor(Math.random() * available.length)];
+        currentUser.imageName = randomTarget.file;
+        currentUser.puzzleName = randomTarget.title;
+
+        loadAndStartCanvas();
+    }
+
+    function loadAndStartCanvas() {
+        switchScreen('game-screen');
         img.onload = () => { document.getElementById('loading-msg').style.display = 'none'; initPuzzle(); };
-        img.onerror = () => { alert('找不到圖片檔，請確認圖片檔名正確。'); showLogin(); };
+        img.onerror = () => { alert('找不到圖片檔，請確認圖片已上傳。'); enterStampCard(); };
         document.getElementById('loading-msg').style.display = 'block';
         img.src = currentUser.imageName;
     }
@@ -235,7 +255,6 @@
         let container = document.getElementById('game-container');
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
-        
         cols = currentUser.gridSize; rows = currentUser.gridSize;
 
         let isPortrait = canvas.height > canvas.width;
@@ -248,10 +267,10 @@
 
         boardStartX = 20; boardStartY = 20;
 
-        let savedDataStr = safeGetItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
+        let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
         let savedData = savedDataStr ? JSON.parse(savedDataStr) : null;
         
-        if (savedData && savedData.gridSize === currentUser.gridSize) {
+        if (savedData && savedData.gridSize === currentUser.gridSize && savedData.imageName === currentUser.imageName) {
             pieces = savedData.pieces;
         } else {
             createAndScatterPieces(isPortrait);
@@ -372,23 +391,47 @@
 
     function checkWin() {
         if (pieces.every(p => p.isLocked)) {
-            isCompleted = true; drawAll(); saveRecord(); safeRemoveItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
-            setTimeout(() => {
-                document.getElementById('win-msg').innerText = `${currentUser.className} ${currentUser.name}，恭喜完成《${currentUser.puzzleName}》！`;
-                document.getElementById('win-modal').style.display = 'flex';
-            }, 300);
+            isCompleted = true; drawAll();
+            setTimeout(() => { triggerQuiz(); }, 500);
         }
     }
 
-    function closeWinModal() { document.getElementById('win-modal').style.display = 'none'; showLogin(); }
+    function triggerQuiz() {
+        document.getElementById('quiz-feedback').innerText = "";
+        let correctTitle = currentUser.puzzleName;
+        let wrongOptions = allPuzzles.filter(p => p.title !== correctTitle).map(p => p.title);
+        
+        // 隨機選 3 個錯誤選項
+        wrongOptions.sort(() => 0.5 - Math.random());
+        let options = [correctTitle, wrongOptions[0], wrongOptions[1], wrongOptions[2]];
+        
+        // 隨機打亂這 4 個選項
+        options.sort(() => 0.5 - Math.random());
+
+        let html = options.map(opt => `<button onclick="checkAnswer('${opt}')">${opt}</button>`).join('');
+        document.getElementById('quiz-options-container').innerHTML = html;
+        document.getElementById('quiz-modal').style.display = 'flex';
+    }
+
+    function checkAnswer(selectedTitle) {
+        if (selectedTitle === currentUser.puzzleName) {
+            alert('🎉 答對了！恭喜獲得一枚印章！');
+            document.getElementById('quiz-modal').style.display = 'none';
+            saveRecord();
+            safeRemoveItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+            enterStampCard(); // 返回集章卡
+        } else {
+            document.getElementById('quiz-feedback').innerText = "哎呀，答錯囉！請仔細觀察圖片再試一次！";
+        }
+    }
 
     function saveAndExit() {
         if (!isCompleted) {
-            let saveData = { gridSize: currentUser.gridSize, pieces: pieces };
-            safeSetItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName, JSON.stringify(saveData));
-            alert('進度已儲存！下次使用相同姓名與圖片即可繼續。');
+            let saveData = { imageName: currentUser.imageName, puzzleName: currentUser.puzzleName, gridSize: currentUser.gridSize, pieces: pieces };
+            safeSetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`, JSON.stringify(saveData));
+            alert('進度已儲存！下次進來可以直接繼續。');
         }
-        showLogin();
+        enterStampCard();
     }
 
     function saveRecord() {
@@ -403,8 +446,23 @@
         safeSetItem('puzzleRecords', JSON.stringify(records));
     }
 
-    // 網頁底部立刻執行一次初始化，確保選單出現
-    updateAvailablePuzzles();
+    function showDashboard() {
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let tbody = document.getElementById('records-body');
+        tbody.innerHTML = '';
+        records.forEach(r => {
+            tbody.innerHTML += `<tr><td>${r.className}</td><td>${r.name}</td><td>${r.puzzle}</td><td>${r.difficulty}</td><td>${r.date}</td></tr>`;
+        });
+        switchScreen('dashboard-screen');
+    }
+
+    function clearRecords() {
+        if(confirm('確定要清空所有過關紀錄嗎？')) {
+            safeRemoveItem('puzzleRecords');
+            showDashboard();
+        }
+    }
 </script>
 </body>
 </html>
