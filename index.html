@@ -48,7 +48,7 @@
 </head>
 <body>
 
-    <!-- 1. 登入畫面 -->
+    <!-- 1. 登入畫面 (極簡版) -->
     <div id="login-screen" class="screen active">
         <h1>🎨 繪本真實拼圖挑戰</h1>
         <div class="form-group">
@@ -75,9 +75,7 @@
     <!-- 2. 集章卡畫面 -->
     <div id="stamp-screen" class="screen">
         <h2 id="stamp-title">我的集章卡</h2>
-        <div class="stamp-grid" id="stamp-grid">
-            <!-- 由 JS 動態生成 -->
-        </div>
+        <div class="stamp-grid" id="stamp-grid"></div>
         <button id="draw-puzzle-btn" class="btn-green" onclick="startRandomPuzzle()">🎲 抽取下一關</button>
         <button class="btn-gray" onclick="switchScreen('login-screen')">返回登入</button>
     </div>
@@ -94,25 +92,24 @@
         </div>
     </div>
 
-    <!-- 4. 教師後台畫面 -->
+    <!-- 4. 教師後台畫面 (只記錄全破關學生) -->
     <div id="dashboard-screen" class="screen">
-        <h2>👨‍🏫 過關紀錄名單</h2>
+        <h2>👨‍🏫 全破關榮譽榜</h2>
+        <p>此名單只會顯示「已經完成全部 10 張拼圖」的學生</p>
         <button class="btn-gray" onclick="switchScreen('login-screen')">返回首頁</button>
         <button class="btn-gray" onclick="clearRecords()">清空紀錄</button>
         <table>
-            <thead><tr><th>班級</th><th>姓名</th><th>獲得印章 (書名)</th><th>難度</th><th>完成時間</th></tr></thead>
+            <thead><tr><th>班級</th><th>姓名</th><th>完成全破關時間</th></tr></thead>
             <tbody id="records-body"></tbody>
         </table>
     </div>
 
-    <!-- 5. 過關測驗彈視窗 -->
+    <!-- 5. 過關測驗彈視窗 (選書名) -->
     <div id="quiz-modal" class="modal">
         <div class="modal-content">
             <h2>🎉 拼圖完成！</h2>
             <p>請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
-            <div class="quiz-options" id="quiz-options-container">
-                <!-- 選項由 JS 生成 -->
-            </div>
+            <div class="quiz-options" id="quiz-options-container"></div>
             <p id="quiz-feedback" style="color: #e74c3c; font-weight: bold; min-height: 24px; margin-top: 10px;"></p>
         </div>
     </div>
@@ -158,7 +155,7 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // 自動判斷難度 (1~2年級=4x4, 3~4年級=5x5, 5~6年級=6x6)
+    // 自動判斷難度
     function determineGridSize(className) {
         if (className.includes('一年') || className.includes('二年')) return 4;
         if (className.includes('三年') || className.includes('四年')) return 5;
@@ -196,7 +193,7 @@
         let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
         
         if (completedTitles.length === allPuzzles.length) {
-            btn.innerText = "🎉 全部收集完成！";
+            btn.innerText = "🎉 最終挑戰完成！已全破關！";
             btn.disabled = true;
             btn.style.backgroundColor = "#95a5a6";
         } else if (savedDataStr) {
@@ -216,7 +213,6 @@
         isCompleted = false;
         document.getElementById('game-title').innerText = "❓ 神秘拼圖挑戰中...";
 
-        // 檢查是否有未完成的存檔
         let saveKey = `puzzleSave_${currentUser.className}_${currentUser.name}`;
         let savedDataStr = safeGetItem(saveKey);
 
@@ -228,7 +224,6 @@
             return;
         }
 
-        // 若無存檔，則隨機抽題
         let recordsData = safeGetItem('puzzleRecords');
         let records = recordsData ? JSON.parse(recordsData) : [];
         let completedTitles = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).map(r => r.puzzle);
@@ -264,7 +259,6 @@
         let scale = Math.min(maxWidth / img.width, maxHeight / img.height);
         puzzleWidth = img.width * scale; puzzleHeight = img.height * scale;
         pieceWidth = puzzleWidth / cols; pieceHeight = puzzleHeight / rows;
-
         boardStartX = 20; boardStartY = 20;
 
         let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
@@ -301,19 +295,15 @@
                     leftTab: (x === 0) ? 0 : -horizontalTabs[y][x-1],
                     rightTab: (x === cols - 1) ? 0 : horizontalTabs[y][x]
                 };
-
                 if (isPortrait) {
-                    let trayStartY = boardStartY + puzzleHeight + 20;
-                    let trayHeight = canvas.height - trayStartY - pieceHeight;
+                    let trayStartY = boardStartY + puzzleHeight + 20; let trayHeight = canvas.height - trayStartY - pieceHeight;
                     piece.currentX = Math.random() * (canvas.width - pieceWidth);
                     piece.currentY = trayStartY + Math.random() * (trayHeight > 0 ? trayHeight : 0);
                 } else {
-                    let trayStartX = boardStartX + puzzleWidth + 20;
-                    let trayWidth = canvas.width - trayStartX - pieceWidth;
+                    let trayStartX = boardStartX + puzzleWidth + 20; let trayWidth = canvas.width - trayStartX - pieceWidth;
                     piece.currentX = trayStartX + Math.random() * (trayWidth > 0 ? trayWidth : 0);
                     piece.currentY = Math.random() * (canvas.height - pieceHeight);
                 }
-                
                 piece.currentX = Math.max(0, Math.min(piece.currentX, canvas.width - pieceWidth));
                 piece.currentY = Math.max(0, Math.min(piece.currentY, canvas.height - pieceHeight));
                 pieces.push(piece);
@@ -401,11 +391,8 @@
         let correctTitle = currentUser.puzzleName;
         let wrongOptions = allPuzzles.filter(p => p.title !== correctTitle).map(p => p.title);
         
-        // 隨機選 3 個錯誤選項
         wrongOptions.sort(() => 0.5 - Math.random());
         let options = [correctTitle, wrongOptions[0], wrongOptions[1], wrongOptions[2]];
-        
-        // 隨機打亂這 4 個選項
         options.sort(() => 0.5 - Math.random());
 
         let html = options.map(opt => `<button onclick="checkAnswer('${opt}')">${opt}</button>`).join('');
@@ -419,7 +406,15 @@
             document.getElementById('quiz-modal').style.display = 'none';
             saveRecord();
             safeRemoveItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
-            enterStampCard(); // 返回集章卡
+            
+            // 檢查是否全部破關
+            let recordsData = safeGetItem('puzzleRecords');
+            let records = recordsData ? JSON.parse(recordsData) : [];
+            let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
+            if (completedCount === 10) {
+                alert('🏆 狂賀！你已經收集到所有 10 枚印章，完成最終挑戰！請告訴老師來兌換獎勵！');
+            }
+            enterStampCard();
         } else {
             document.getElementById('quiz-feedback').innerText = "哎呀，答錯囉！請仔細觀察圖片再試一次！";
         }
@@ -437,28 +432,54 @@
     function saveRecord() {
         let recordsData = safeGetItem('puzzleRecords');
         let records = recordsData ? JSON.parse(recordsData) : [];
-        let now = new Date();
-        records.push({
-            className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
-            difficulty: (currentUser.gridSize * currentUser.gridSize) + '片',
-            date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
-        });
-        safeSetItem('puzzleRecords', JSON.stringify(records));
+        
+        // 避免重複寫入同一題
+        let alreadySaved = records.some(r => r.name === currentUser.name && r.className === currentUser.className && r.puzzle === currentUser.puzzleName);
+        if (!alreadySaved) {
+            let now = new Date();
+            records.push({
+                className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
+                date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+            });
+            safeSetItem('puzzleRecords', JSON.stringify(records));
+        }
     }
 
     function showDashboard() {
         let recordsData = safeGetItem('puzzleRecords');
         let records = recordsData ? JSON.parse(recordsData) : [];
+        
+        // 依照學生分組，計算每個人完成的印章數
+        let students = {};
+        records.forEach(r => {
+            let key = r.className + "_" + r.name;
+            if (!students[key]) {
+                students[key] = { className: r.className, name: r.name, completed: new Set(), lastDate: r.date };
+            }
+            students[key].completed.add(r.puzzle);
+            students[key].lastDate = r.date;
+        });
+
         let tbody = document.getElementById('records-body');
         tbody.innerHTML = '';
-        records.forEach(r => {
-            tbody.innerHTML += `<tr><td>${r.className}</td><td>${r.name}</td><td>${r.puzzle}</td><td>${r.difficulty}</td><td>${r.date}</td></tr>`;
-        });
+        
+        let hasGraduates = false;
+        for (let key in students) {
+            if (students[key].completed.size === 10) { // 只顯示完成 10 張的人
+                hasGraduates = true;
+                tbody.innerHTML += `<tr><td>${students[key].className}</td><td>${students[key].name}</td><td>${students[key].lastDate}</td></tr>`;
+            }
+        }
+
+        if (!hasGraduates) {
+            tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; color: #7f8c8d;">目前尚未有完成全部 10 幅拼圖的學生。</td></tr>`;
+        }
+        
         switchScreen('dashboard-screen');
     }
 
     function clearRecords() {
-        if(confirm('確定要清空所有過關紀錄嗎？')) {
+        if(confirm('確定要清空所有紀錄嗎？(包含學生的集章卡進度都會歸零喔)')) {
             safeRemoveItem('puzzleRecords');
             showDashboard();
         }
