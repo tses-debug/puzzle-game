@@ -205,4 +205,372 @@
         </div>
     </div>
 
-    <!-- 4. 過
+    <!-- 4. 過關測驗彈視窗 -->
+    <div id="quiz-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="quiz-header">🎉 拼圖完成！</h2>
+            <p id="quiz-text">請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
+            <div class="quiz-options" id="quiz-options-container"></div>
+            <p id="quiz-feedback" style="color: #e74c3c; font-weight: bold; min-height: 24px; margin-top: 15px;"></p>
+        </div>
+    </div>
+
+<script>
+    // 👇👇👇 請在這裡貼上您在 Google Apps Script 取得的「網頁應用程式」網址 👇👇👇
+    const GOOGLE_SCRIPT_URL = '請在此貼上你的_Web_App_網址';
+    // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+
+    let memoryStorage = {};
+    function safeGetItem(key) { try { return localStorage.getItem(key) || memoryStorage[key] || null; } catch(e) { return memoryStorage[key] || null; } }
+    function safeSetItem(key, value) { try { localStorage.setItem(key, value); } catch(e) { memoryStorage[key] = value; } }
+    function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) { delete memoryStorage[key]; } }
+
+    const allPuzzles = [
+        { file: '12婆姐.jpg', title: '12婆姐' },
+        { file: '拼被人去旅行.jpg', title: '拼被人去旅行' },
+        { file: '少年西拉雅.jpg', title: '少年西拉雅' },
+        { file: '外婆住在香水村.jpg', title: '外婆住在香水村' },
+        { file: '橡皮頭蹦太郎.jpg', title: '橡皮頭蹦太郎' },
+        { file: '獨眼貓.jpg', title: '獨眼貓' },
+        { file: '洪通繪畫無師自通.jpg', title: '洪通繪畫無師自通' },
+        { file: '海之生.jpg', title: '海之生' },
+        { file: '曾文溪的故事.jpg', title: '曾文溪的故事' },
+        { file: '小兔彼得的故事.jpg', title: '小兔彼得的故事' }
+    ];
+
+    let canvas = document.getElementById('puzzle-canvas');
+    let ctx = canvas.getContext('2d');
+    let img = new Image();
+    
+    let pieces = [];
+    let cols, rows;
+    let puzzleWidth, puzzleHeight, pieceWidth, pieceHeight;
+    let boardStartX, boardStartY;
+    
+    let selectedPiece = null;
+    let isDragging = false;
+    let currentUser = {};
+    let isCompleted = false;
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        
+        // 隱藏/顯示首頁的標題與副標題
+        let isHome = (screenId === 'login-screen');
+        document.querySelector('h1').style.display = isHome ? 'block' : 'none';
+        document.querySelector('.subtitle').style.display = isHome ? 'block' : 'none';
+    }
+
+    function determineGridSize(className) {
+        if (className.includes('一年') || className.includes('二年')) return 4;
+        if (className.includes('三年') || className.includes('四年')) return 5;
+        return 6; 
+    }
+
+    function enterStampCard() {
+        let name = document.getElementById('student-name').value.trim();
+        if (!name) return alert('請先輸入姓名！');
+        let className = document.getElementById('class-select').value;
+        
+        currentUser = { className: className, name: name, gridSize: determineGridSize(className) };
+        document.getElementById('stamp-title').innerText = `${className} ${name} 的集章卡`;
+        
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let completedTitles = records.filter(r => r.name === name && r.className === className).map(r => r.puzzle);
+
+        let gridHtml = '';
+        allPuzzles.forEach(p => {
+            if (completedTitles.includes(p.title)) {
+                gridHtml += `<div class="stamp-slot completed"><div class="stamp-icon">🏅</div>${p.title}</div>`;
+            } else {
+                gridHtml += `<div class="stamp-slot"><div class="stamp-icon">🔒</div>未解鎖</div>`;
+            }
+        });
+        document.getElementById('stamp-grid').innerHTML = gridHtml;
+
+        let btn = document.getElementById('draw-puzzle-btn');
+        let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+        
+        if (completedTitles.length === allPuzzles.length) {
+            btn.innerText = "🎉 最終挑戰完成！已全破關！";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#E0E0E0";
+            btn.style.color = "#A0A0A0";
+            btn.style.boxShadow = "none";
+            btn.style.transform = "none";
+        } else if (savedDataStr) {
+            btn.innerText = "▶ 繼續未完成的關卡";
+            btn.disabled = false;
+            btn.style.backgroundColor = "#FACA43";
+            btn.style.color = "#2B2A4C";
+            btn.style.boxShadow = "0px 6px 0px #2B2A4C";
+        } else {
+            btn.innerText = "🎲 抽取神秘下一關";
+            btn.disabled = false;
+            btn.style.backgroundColor = "#FACA43";
+            btn.style.color = "#2B2A4C";
+            btn.style.boxShadow = "0px 6px 0px #2B2A4C";
+        }
+        switchScreen('stamp-screen');
+    }
+
+    function startRandomPuzzle() {
+        isCompleted = false;
+        document.getElementById('game-title').innerText = "❓ 神秘拼圖挑戰中...";
+
+        let saveKey = `puzzleSave_${currentUser.className}_${currentUser.name}`;
+        let savedDataStr = safeGetItem(saveKey);
+
+        if (savedDataStr) {
+            let savedData = JSON.parse(savedDataStr);
+            currentUser.imageName = savedData.imageName;
+            currentUser.puzzleName = savedData.puzzleName;
+            loadAndStartCanvas();
+            return;
+        }
+
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let completedTitles = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).map(r => r.puzzle);
+        
+        let available = allPuzzles.filter(p => !completedTitles.includes(p.title));
+        if (available.length === 0) return alert('你已經獲得所有印章囉！');
+
+        let randomTarget = available[Math.floor(Math.random() * available.length)];
+        currentUser.imageName = randomTarget.file;
+        currentUser.puzzleName = randomTarget.title;
+
+        loadAndStartCanvas();
+    }
+
+    function loadAndStartCanvas() {
+        switchScreen('game-screen');
+        img.onload = () => { document.getElementById('loading-msg').style.display = 'none'; initPuzzle(); };
+        img.onerror = () => { alert('找不到圖片檔，請確認圖片已上傳。'); enterStampCard(); };
+        document.getElementById('loading-msg').style.display = 'block';
+        img.src = currentUser.imageName;
+    }
+
+    function initPuzzle() {
+        let container = document.getElementById('game-container');
+        canvas.width = container.clientWidth; canvas.height = container.clientHeight;
+        cols = currentUser.gridSize; rows = currentUser.gridSize;
+
+        let isPortrait = canvas.height > canvas.width;
+        let maxWidth = isPortrait ? canvas.width * 0.9 : canvas.width * 0.55;
+        let maxHeight = isPortrait ? canvas.height * 0.55 : canvas.height * 0.9;
+        
+        let scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+        puzzleWidth = img.width * scale; puzzleHeight = img.height * scale;
+        pieceWidth = puzzleWidth / cols; pieceHeight = puzzleHeight / rows;
+        boardStartX = 20; boardStartY = 20;
+
+        let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+        let savedData = savedDataStr ? JSON.parse(savedDataStr) : null;
+        
+        if (savedData && savedData.gridSize === currentUser.gridSize && savedData.imageName === currentUser.imageName) {
+            pieces = savedData.pieces;
+        } else {
+            createAndScatterPieces(isPortrait);
+        }
+        
+        drawAll(); setupEvents();
+    }
+
+    function createAndScatterPieces(isPortrait) {
+        pieces = [];
+        let horizontalTabs = []; let verticalTabs = [];   
+        for(let y=0; y<rows; y++) {
+            let rowT = []; for(let x=0; x<cols-1; x++) rowT.push(Math.random() > 0.5 ? 1 : -1);
+            horizontalTabs.push(rowT);
+        }
+        for(let y=0; y<rows-1; y++) {
+            let colT = []; for(let x=0; x<cols; x++) colT.push(Math.random() > 0.5 ? 1 : -1);
+            verticalTabs.push(colT);
+        }
+
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                let piece = {
+                    correctX: boardStartX + x * pieceWidth, correctY: boardStartY + y * pieceHeight,
+                    currentX: 0, currentY: 0, w: pieceWidth, h: pieceHeight, col: x, row: y, isLocked: false,
+                    topTab: (y === 0) ? 0 : -verticalTabs[y-1][x],
+                    bottomTab: (y === rows - 1) ? 0 : verticalTabs[y][x],
+                    leftTab: (x === 0) ? 0 : -horizontalTabs[y][x-1],
+                    rightTab: (x === cols - 1) ? 0 : horizontalTabs[y][x]
+                };
+                if (isPortrait) {
+                    let trayStartY = boardStartY + puzzleHeight + 20; let trayHeight = canvas.height - trayStartY - pieceHeight;
+                    piece.currentX = Math.random() * (canvas.width - pieceWidth);
+                    piece.currentY = trayStartY + Math.random() * (trayHeight > 0 ? trayHeight : 0);
+                } else {
+                    let trayStartX = boardStartX + puzzleWidth + 20; let trayWidth = canvas.width - trayStartX - pieceWidth;
+                    piece.currentX = trayStartX + Math.random() * (trayWidth > 0 ? trayWidth : 0);
+                    piece.currentY = Math.random() * (canvas.height - pieceHeight);
+                }
+                piece.currentX = Math.max(0, Math.min(piece.currentX, canvas.width - pieceWidth));
+                piece.currentY = Math.max(0, Math.min(piece.currentY, canvas.height - pieceHeight));
+                pieces.push(piece);
+            }
+        }
+    }
+
+    function buildPiecePath(ctx, p, w, h) {
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        if (p.topTab === 0) ctx.lineTo(w, 0);
+        else { let s = p.topTab; ctx.lineTo(w * 0.38, 0); ctx.bezierCurveTo(w * 0.38, s * -h * 0.2, w * 0.25, s * -h * 0.3, w * 0.5, s * -h * 0.3); ctx.bezierCurveTo(w * 0.75, s * -h * 0.3, w * 0.62, s * -h * 0.2, w * 0.62, 0); ctx.lineTo(w, 0); }
+        if (p.rightTab === 0) ctx.lineTo(w, h);
+        else { let s = p.rightTab; ctx.lineTo(w, h * 0.38); ctx.bezierCurveTo(w + s * w * 0.2, h * 0.38, w + s * w * 0.3, h * 0.25, w + s * w * 0.3, h * 0.5); ctx.bezierCurveTo(w + s * w * 0.3, h * 0.75, w + s * w * 0.2, h * 0.62, w, h * 0.62); ctx.lineTo(w, h); }
+        if (p.bottomTab === 0) ctx.lineTo(0, h);
+        else { let s = p.bottomTab; ctx.lineTo(w * 0.62, h); ctx.bezierCurveTo(w * 0.62, h + s * h * 0.2, w * 0.75, h + s * h * 0.3, w * 0.5, h + s * h * 0.3); ctx.bezierCurveTo(w * 0.25, h + s * h * 0.3, w * 0.38, h + s * h * 0.2, w * 0.38, h); ctx.lineTo(0, h); }
+        if (p.leftTab === 0) ctx.lineTo(0, 0);
+        else { let s = p.leftTab; ctx.lineTo(0, h * 0.62); ctx.bezierCurveTo(s * -w * 0.2, h * 0.62, s * -w * 0.3, h * 0.75, s * -w * 0.3, h * 0.5); ctx.bezierCurveTo(s * -w * 0.3, h * 0.25, s * -w * 0.2, h * 0.38, 0, h * 0.38); ctx.lineTo(0, 0); }
+    }
+
+    function drawAll() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (isCompleted) {
+            ctx.drawImage(img, boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+            ctx.strokeStyle = '#2B2A4C'; ctx.lineWidth = 5; ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+            return;
+        }
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+        ctx.strokeStyle = '#BDC3C7'; ctx.lineWidth = 1.5;
+        pieces.forEach(p => { ctx.save(); ctx.translate(p.correctX, p.correctY); buildPiecePath(ctx, p, p.w, p.h); ctx.stroke(); ctx.restore(); });
+        ctx.strokeStyle = '#2B2A4C'; ctx.lineWidth = 3; ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+        ctx.restore();
+        pieces.forEach(p => { if (p !== selectedPiece) drawPiece(p); });
+        if (selectedPiece) drawPiece(selectedPiece);
+    }
+
+    function drawPiece(p) {
+        ctx.save(); ctx.translate(p.currentX, p.currentY); buildPiecePath(ctx, p, p.w, p.h); ctx.clip();
+        ctx.drawImage(img, 0, 0, img.width, img.height, -p.col * p.w, -p.row * p.h, puzzleWidth, puzzleHeight);
+        ctx.lineWidth = p.isLocked ? 1 : 2.5; ctx.strokeStyle = p.isLocked ? 'rgba(43,42,76,0.2)' : '#2B2A4C'; ctx.stroke(); ctx.restore();
+    }
+
+    function setupEvents() {
+        canvas.onmousedown = handleDown; canvas.onmousemove = handleMove; canvas.onmouseup = handleUp; canvas.onmouseleave = handleUp;
+        canvas.ontouchstart = (e) => { e.preventDefault(); handleDown(e.touches[0]); };
+        canvas.ontouchmove = (e) => { e.preventDefault(); handleMove(e.touches[0]); };
+        canvas.ontouchend = (e) => { e.preventDefault(); handleUp(); };
+    }
+
+    function handleDown(e) {
+        if (isCompleted) return;
+        let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let scaleY = canvas.height / rect.height;
+        let mouseX = (e.clientX - rect.left) * scaleX; let mouseY = (e.clientY - rect.top) * scaleY;
+        for (let i = pieces.length - 1; i >= 0; i--) {
+            let p = pieces[i];
+            if (!p.isLocked && mouseX >= p.currentX && mouseX <= p.currentX + p.w && mouseY >= p.currentY && mouseY <= p.currentY + p.h) {
+                selectedPiece = p; isDragging = true; pieces.splice(i, 1); pieces.push(selectedPiece); break;
+            }
+        }
+    }
+
+    function handleMove(e) {
+        if (!isDragging || !selectedPiece || isCompleted) return;
+        let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let scaleY = canvas.height / rect.height;
+        selectedPiece.currentX = (e.clientX - rect.left) * scaleX - (pieceWidth / 2);
+        selectedPiece.currentY = (e.clientY - rect.top) * scaleY - (pieceHeight / 2); drawAll();
+    }
+
+    function handleUp() {
+        if (!isDragging || !selectedPiece || isCompleted) return;
+        let diffX = Math.abs(selectedPiece.currentX - selectedPiece.correctX); let diffY = Math.abs(selectedPiece.currentY - selectedPiece.correctY);
+        if (diffX < pieceWidth * 0.25 && diffY < pieceHeight * 0.25) { selectedPiece.currentX = selectedPiece.correctX; selectedPiece.currentY = selectedPiece.correctY; selectedPiece.isLocked = true; }
+        isDragging = false; selectedPiece = null; drawAll(); checkWin();
+    }
+
+    function checkWin() {
+        if (pieces.every(p => p.isLocked)) {
+            isCompleted = true; drawAll();
+            setTimeout(() => { triggerQuiz(); }, 500);
+        }
+    }
+
+    function triggerQuiz() {
+        document.getElementById('quiz-header').innerText = "🎉 拼圖完成！";
+        document.getElementById('quiz-text').innerHTML = "請問這幅完整的畫作，是出自哪一本繪本呢？<br><small style='color:#3498db;'>(答對才能獲得印章喔！)</small>";
+        document.getElementById('quiz-feedback').innerText = "";
+        
+        let correctTitle = currentUser.puzzleName;
+        let wrongOptions = allPuzzles.filter(p => p.title !== correctTitle).map(p => p.title);
+        
+        wrongOptions.sort(() => 0.5 - Math.random());
+        let options = [correctTitle, wrongOptions[0], wrongOptions[1], wrongOptions[2]];
+        options.sort(() => 0.5 - Math.random());
+
+        let html = options.map(opt => `<button onclick="checkAnswer('${opt}')">${opt}</button>`).join('');
+        document.getElementById('quiz-options-container').innerHTML = html;
+        document.getElementById('quiz-modal').style.display = 'flex';
+    }
+
+    function checkAnswer(selectedTitle) {
+        if (selectedTitle === currentUser.puzzleName) {
+            safeRemoveItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+            
+            let recordsData = safeGetItem('puzzleRecords');
+            let records = recordsData ? JSON.parse(recordsData) : [];
+            let alreadySaved = records.some(r => r.name === currentUser.name && r.className === currentUser.className && r.puzzle === currentUser.puzzleName);
+            
+            if (!alreadySaved) {
+                let now = new Date();
+                records.push({
+                    className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
+                    date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+                });
+                safeSetItem('puzzleRecords', JSON.stringify(records));
+            }
+
+            let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
+            
+            if (completedCount === 10) {
+                document.getElementById('quiz-header').innerText = "🏆 最終挑戰完成！";
+                document.getElementById('quiz-text').innerHTML = "狂賀！你已經收集到所有 10 枚印章！<br>正在將你的過關紀錄傳送給老師...";
+                document.getElementById('quiz-options-container').innerHTML = "";
+                document.getElementById('quiz-feedback').style.color = "#2ecc71";
+                document.getElementById('quiz-feedback').innerText = "資料傳送中，請稍候...";
+                
+                if(GOOGLE_SCRIPT_URL !== '請在此貼上你的_Web_App_網址' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+                    let nowTime = new Date().toLocaleString();
+                    let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
+                    
+                    fetch(url, { mode: 'no-cors' }).then(() => {
+                        alert('✅ 你的全破關紀錄已經成功傳送給老師囉！請帶著榮譽券去找老師兌換獎勵！');
+                        document.getElementById('quiz-modal').style.display = 'none';
+                        enterStampCard();
+                    }).catch(err => {
+                        alert('⚠️ 傳送紀錄失敗，請截圖本畫面通知老師。');
+                        document.getElementById('quiz-modal').style.display = 'none';
+                        enterStampCard();
+                    });
+                } else {
+                    alert('⚠️ 老師的雲端網址尚未設定，請通知老師。');
+                    document.getElementById('quiz-modal').style.display = 'none';
+                    enterStampCard();
+                }
+            } else {
+                alert('🎉 答對了！恭喜獲得一枚印章！');
+                document.getElementById('quiz-modal').style.display = 'none';
+                enterStampCard();
+            }
+        } else {
+            document.getElementById('quiz-feedback').innerText = "哎呀，答錯囉！請仔細觀察圖片再試一次！";
+        }
+    }
+
+    function saveAndExit() {
+        if (!isCompleted) {
+            let saveData = { imageName: currentUser.imageName, puzzleName: currentUser.puzzleName, gridSize: currentUser.gridSize, pieces: pieces };
+            safeSetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`, JSON.stringify(saveData));
+            alert('進度已儲存！下次點擊「繼續未完成的關卡」即可繼續。');
+        }
+        enterStampCard();
+    }
+</script>
+</body>
+</html>
