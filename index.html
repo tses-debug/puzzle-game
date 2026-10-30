@@ -18,21 +18,22 @@
             box-sizing: border-box; 
         }
 
-        /* 👑 活潑彈跳感大標題 (模仿參考圖的繽紛立體效果) */
+        /* 👑 改良版：活潑彈跳感大標題 (深色粗邊框、字體更粗壯) */
         .bouncy-title {
             text-align: center;
             margin: 20px 0 10px 0;
-            font-size: clamp(40px, 9vw, 68px); /* 響應式大字體 */
+            font-size: clamp(42px, 9vw, 72px); /* 稍微再放大一點點 */
             font-weight: 900;
             white-space: nowrap;
         }
         .bouncy-title span {
             display: inline-block;
             color: var(--c);
-            -webkit-text-stroke: 4px #FFFFFF; /* 白色粗邊框 */
-            filter: drop-shadow(0px 7px 0px #2B2A4C); /* 深藍色立體陰影 */
-            transform: rotate(var(--r)); /* 每個字的傾斜角度 */
-            margin: 0 1px;
+            -webkit-text-stroke: 3px #2B2A4C; /* 改為深藍色外框，強烈對比 */
+            paint-order: stroke fill; /* 讓邊框往外長，不吃掉字體厚度 */
+            filter: drop-shadow(0px 8px 0px #2B2A4C); /* 加深立體陰影 */
+            transform: rotate(var(--r)); 
+            margin: 0 2px;
             font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', 'Microsoft JhengHei', sans-serif;
             letter-spacing: 2px;
         }
@@ -136,17 +137,11 @@
         .quiz-options button { background-color: #FACA43; font-size: 16px; padding: 15px; margin: 0; width: 100%; }
         
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        /* 教師後台表格 */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; border-radius: 10px; overflow: hidden; border: 3px solid #2B2A4C; }
-        th, td { border: 2px solid #2B2A4C; padding: 12px; text-align: center; font-weight: bold; color: #2B2A4C; }
-        th { background-color: #2B2A4C; color: white; border: none; }
     </style>
 </head>
 <body>
 
     <!-- 1. 首頁畫面 -->
-    <!-- 為標題每個字設定不同的顏色與旋轉角度，創造繽紛立體感 -->
     <h1 class="bouncy-title">
         <span style="--c:#FF6B81; --r:-6deg;">繪</span>
         <span style="--c:#2ED573; --r:4deg;">本</span>
