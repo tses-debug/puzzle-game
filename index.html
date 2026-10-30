@@ -5,121 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>繪本互動拼圖闖關</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f8ff;
-            margin: 0;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f8ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box; }
         h1 { color: #2c3e50; font-size: 24px; margin: 10px 0; }
-        .screen {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 800px;
-            width: 100%;
-            display: none;
-            text-align: center;
-            box-sizing: border-box;
-        }
+        .screen { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 800px; width: 100%; display: none; text-align: center; box-sizing: border-box; }
         .active { display: block; }
-        
-        #game-screen {
-            display: none;
-            flex-direction: column;
-            width: 100%;
-            height: 98vh;
-            max-width: 1200px;
-            padding: 10px;
-        }
+        #game-screen { display: none; flex-direction: column; width: 100%; height: 98vh; max-width: 1200px; padding: 10px; }
         #game-screen.active { display: flex; }
-        
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .header-bar h2 { margin: 0; font-size: 20px; }
-
         .form-group { margin: 15px 0; text-align: left; }
         label { display: block; font-weight: bold; margin-bottom: 5px; color: #34495e; }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #bdc3c7;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        select, input { width: 100%; padding: 10px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
         button:hover { background-color: #2980b9; }
         .btn-green { background-color: #2ecc71; }
         .btn-green:hover { background-color: #27ae60; }
         .btn-gray { background-color: #95a5a6; }
-        
-        #game-container {
-            flex-grow: 1;
-            position: relative;
-            border: 4px solid #34495e;
-            border-radius: 10px;
-            background-color: #ecf0f1;
-            overflow: hidden;
-            width: 100%;
-        }
+        #game-container { flex-grow: 1; position: relative; border: 4px solid #34495e; border-radius: 10px; background-color: #ecf0f1; overflow: hidden; width: 100%; }
         canvas { display: block; touch-action: none; width: 100%; height: 100%; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: center; }
         th { background-color: #3498db; color: white; }
-
-        /* 過關慶祝彈視窗 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.3);
-            max-width: 400px;
-            width: 85%;
-            animation: popIn 0.3s ease-out;
-        }
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 15px; text-align: center; box-shadow: 0 5px 25px rgba(0,0,0,0.3); max-width: 400px; width: 85%; animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <!-- 登入與設定畫面 -->
     <div id="login-screen" class="screen active">
         <h1>🎨 繪本真實拼圖挑戰</h1>
-        
         <div class="form-group">
             <label>選擇班級</label>
             <select id="class-select" onchange="updateAvailablePuzzles()">
@@ -132,12 +47,10 @@
                 <option value="六年甲班">六年甲班</option>
             </select>
         </div>
-
         <div class="form-group">
             <label>輸入姓名</label>
             <input type="text" id="student-name" placeholder="請輸入你的名字" oninput="updateAvailablePuzzles()" required>
         </div>
-
         <div class="form-group">
             <label>選擇難度</label>
             <select id="difficulty-select" onchange="updateAvailablePuzzles()">
@@ -146,20 +59,15 @@
                 <option value="6">高年級 (36片)</option>
             </select>
         </div>
-
         <div class="form-group">
             <label>選擇拼圖</label>
-            <select id="image-select">
-                <!-- 由 JavaScript 自動寫入選單 -->
-            </select>
+            <select id="image-select"></select>
         </div>
-
         <button id="start-btn" onclick="startGame()">開始闖關</button>
         <br><br><hr><br>
         <button class="btn-gray" onclick="showDashboard()">👨‍🏫 教師後台</button>
     </div>
 
-    <!-- 遊戲畫面 -->
     <div id="game-screen" class="screen">
         <div class="header-bar">
             <h2 id="game-title">拼圖中...</h2>
@@ -171,35 +79,41 @@
         </div>
     </div>
 
-    <!-- 教師後台畫面 -->
     <div id="dashboard-screen" class="screen">
         <h2>👨‍🏫 過關紀錄名單</h2>
         <button class="btn-gray" onclick="showLogin()">返回首頁</button>
         <button class="btn-gray" onclick="clearRecords()">清空紀錄</button>
         <table>
-            <thead>
-                <tr>
-                    <th>班級</th>
-                    <th>姓名</th>
-                    <th>完成拼圖</th>
-                    <th>難度</th>
-                    <th>完成時間</th>
-                </tr>
-            </thead>
+            <thead><tr><th>班級</th><th>姓名</th><th>完成拼圖</th><th>難度</th><th>完成時間</th></tr></thead>
             <tbody id="records-body"></tbody>
         </table>
     </div>
 
-    <!-- 過關彈視窗 -->
     <div id="win-modal" class="modal">
         <div class="modal-content">
             <h2>🎉 太棒了！挑戰成功！</h2>
-            <p id="win-msg">你已經成功完成整幅作品囉！</p>
+            <p id="win-msg">你已經成功完成囉！</p>
             <button class="btn-green" onclick="closeWinModal()">確定並返回首頁</button>
         </div>
     </div>
 
 <script>
+    // --- 安全存儲機制 (防止 Google Sites 阻擋 localStorage 導致當機) ---
+    let memoryStorage = {};
+    function safeGetItem(key) {
+        try { return localStorage.getItem(key) || memoryStorage[key] || null; } 
+        catch (e) { return memoryStorage[key] || null; }
+    }
+    function safeSetItem(key, value) {
+        try { localStorage.setItem(key, value); } 
+        catch (e) { memoryStorage[key] = value; }
+    }
+    function safeRemoveItem(key) {
+        try { localStorage.removeItem(key); } 
+        catch (e) { delete memoryStorage[key]; }
+    }
+    // -----------------------------------------------------------
+
     const allPuzzles = [
         { file: '12婆姐.jpg', title: '12婆姐' },
         { file: '拼被人去旅行.jpg', title: '拼被人去旅行' },
@@ -228,11 +142,6 @@
     let currentUser = {};
     let isCompleted = false;
 
-    // 確保頁面載入完成後立即填入圖片選單
-    document.addEventListener('DOMContentLoaded', function() {
-        updateAvailablePuzzles();
-    });
-
     function switchScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -249,14 +158,12 @@
         let selectEl = document.getElementById('image-select');
         let startBtn = document.getElementById('start-btn');
         
-        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
         
-        // 如果學生未輸入名字，預設顯示所有 10 張拼圖
         let completedTitles = [];
         if (name !== '') {
-            completedTitles = records
-                .filter(r => r.name === name && r.className === className)
-                .map(r => r.puzzle);
+            completedTitles = records.filter(r => r.name === name && r.className === className).map(r => r.puzzle);
         }
 
         selectEl.innerHTML = '';
@@ -282,7 +189,8 @@
     }
 
     function showDashboard() {
-        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || [];
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
         let tbody = document.getElementById('records-body');
         tbody.innerHTML = '';
         records.forEach(r => {
@@ -292,8 +200,8 @@
     }
 
     function clearRecords() {
-        if(confirm('確定要清空所有過關紀錄嗎？清空後隱藏的拼圖將重新出現。')) {
-            localStorage.removeItem('puzzleRecords');
+        if(confirm('確定要清空所有過關紀錄嗎？')) {
+            safeRemoveItem('puzzleRecords');
             showDashboard();
         }
     }
@@ -317,14 +225,8 @@
         document.getElementById('game-title').innerText = currentUser.puzzleName;
         switchScreen('game-screen');
         
-        img.onload = () => {
-            document.getElementById('loading-msg').style.display = 'none';
-            initPuzzle();
-        };
-        img.onerror = () => {
-            alert('找不到圖片檔，請確認圖片檔名正確。');
-            showLogin();
-        };
+        img.onload = () => { document.getElementById('loading-msg').style.display = 'none'; initPuzzle(); };
+        img.onerror = () => { alert('找不到圖片檔，請確認圖片檔名正確。'); showLogin(); };
         document.getElementById('loading-msg').style.display = 'block';
         img.src = currentUser.imageName;
     }
@@ -334,23 +236,20 @@
         canvas.width = container.clientWidth;
         canvas.height = container.clientHeight;
         
-        cols = currentUser.gridSize;
-        rows = currentUser.gridSize;
+        cols = currentUser.gridSize; rows = currentUser.gridSize;
 
         let isPortrait = canvas.height > canvas.width;
         let maxWidth = isPortrait ? canvas.width * 0.9 : canvas.width * 0.55;
         let maxHeight = isPortrait ? canvas.height * 0.55 : canvas.height * 0.9;
         
         let scale = Math.min(maxWidth / img.width, maxHeight / img.height);
-        puzzleWidth = img.width * scale;
-        puzzleHeight = img.height * scale;
-        pieceWidth = puzzleWidth / cols;
-        pieceHeight = puzzleHeight / rows;
+        puzzleWidth = img.width * scale; puzzleHeight = img.height * scale;
+        pieceWidth = puzzleWidth / cols; pieceHeight = puzzleHeight / rows;
 
-        boardStartX = 20;
-        boardStartY = 20;
+        boardStartX = 20; boardStartY = 20;
 
-        let savedData = JSON.parse(localStorage.getItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName));
+        let savedDataStr = safeGetItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
+        let savedData = savedDataStr ? JSON.parse(savedDataStr) : null;
         
         if (savedData && savedData.gridSize === currentUser.gridSize) {
             pieces = savedData.pieces;
@@ -358,37 +257,26 @@
             createAndScatterPieces(isPortrait);
         }
         
-        drawAll();
-        setupEvents();
+        drawAll(); setupEvents();
     }
 
     function createAndScatterPieces(isPortrait) {
         pieces = [];
-        let horizontalTabs = []; 
-        let verticalTabs = [];   
+        let horizontalTabs = []; let verticalTabs = [];   
         for(let y=0; y<rows; y++) {
-            let rowT = [];
-            for(let x=0; x<cols-1; x++) rowT.push(Math.random() > 0.5 ? 1 : -1);
+            let rowT = []; for(let x=0; x<cols-1; x++) rowT.push(Math.random() > 0.5 ? 1 : -1);
             horizontalTabs.push(rowT);
         }
         for(let y=0; y<rows-1; y++) {
-            let colT = [];
-            for(let x=0; x<cols; x++) colT.push(Math.random() > 0.5 ? 1 : -1);
+            let colT = []; for(let x=0; x<cols; x++) colT.push(Math.random() > 0.5 ? 1 : -1);
             verticalTabs.push(colT);
         }
 
         for (let y = 0; y < rows; y++) {
             for (let x = 0; x < cols; x++) {
                 let piece = {
-                    correctX: boardStartX + x * pieceWidth,
-                    correctY: boardStartY + y * pieceHeight,
-                    currentX: 0,
-                    currentY: 0,
-                    w: pieceWidth,
-                    h: pieceHeight,
-                    col: x,
-                    row: y,
-                    isLocked: false,
+                    correctX: boardStartX + x * pieceWidth, correctY: boardStartY + y * pieceHeight,
+                    currentX: 0, currentY: 0, w: pieceWidth, h: pieceHeight, col: x, row: y, isLocked: false,
                     topTab: (y === 0) ? 0 : -verticalTabs[y-1][x],
                     bottomTab: (y === rows - 1) ? 0 : verticalTabs[y][x],
                     leftTab: (x === 0) ? 0 : -horizontalTabs[y][x-1],
@@ -409,106 +297,114 @@
                 
                 piece.currentX = Math.max(0, Math.min(piece.currentX, canvas.width - pieceWidth));
                 piece.currentY = Math.max(0, Math.min(piece.currentY, canvas.height - pieceHeight));
-                
                 pieces.push(piece);
             }
         }
     }
 
     function buildPiecePath(ctx, p, w, h) {
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-
+        ctx.beginPath(); ctx.moveTo(0, 0);
         if (p.topTab === 0) ctx.lineTo(w, 0);
-        else {
-            let s = p.topTab;
-            ctx.lineTo(w * 0.38, 0);
-            ctx.bezierCurveTo(w * 0.38, s * -h * 0.2, w * 0.25, s * -h * 0.3, w * 0.5,  s * -h * 0.3);
-            ctx.bezierCurveTo(w * 0.75, s * -h * 0.3, w * 0.62, s * -h * 0.2, w * 0.62, 0);
-            ctx.lineTo(w, 0);
-        }
-        
+        else { let s = p.topTab; ctx.lineTo(w * 0.38, 0); ctx.bezierCurveTo(w * 0.38, s * -h * 0.2, w * 0.25, s * -h * 0.3, w * 0.5, s * -h * 0.3); ctx.bezierCurveTo(w * 0.75, s * -h * 0.3, w * 0.62, s * -h * 0.2, w * 0.62, 0); ctx.lineTo(w, 0); }
         if (p.rightTab === 0) ctx.lineTo(w, h);
-        else {
-            let s = p.rightTab;
-            ctx.lineTo(w, h * 0.38);
-            ctx.bezierCurveTo(w + s * w * 0.2, h * 0.38, w + s * w * 0.3, h * 0.25, w + s * w * 0.3, h * 0.5);
-            ctx.bezierCurveTo(w + s * w * 0.3, h * 0.75, w + s * w * 0.2, h * 0.62, w, h * 0.62);
-            ctx.lineTo(w, h);
-        }
-        
+        else { let s = p.rightTab; ctx.lineTo(w, h * 0.38); ctx.bezierCurveTo(w + s * w * 0.2, h * 0.38, w + s * w * 0.3, h * 0.25, w + s * w * 0.3, h * 0.5); ctx.bezierCurveTo(w + s * w * 0.3, h * 0.75, w + s * w * 0.2, h * 0.62, w, h * 0.62); ctx.lineTo(w, h); }
         if (p.bottomTab === 0) ctx.lineTo(0, h);
-        else {
-            let s = p.bottomTab;
-            ctx.lineTo(w * 0.62, h);
-            ctx.bezierCurveTo(w * 0.62, h + s * h * 0.2, w * 0.75, h + s * h * 0.3, w * 0.5, h + s * h * 0.3);
-            ctx.bezierCurveTo(w * 0.25, h + s * h * 0.3, w * 0.38, h + s * h * 0.2, w * 0.38, h);
-            ctx.lineTo(0, h);
-        }
-        
+        else { let s = p.bottomTab; ctx.lineTo(w * 0.62, h); ctx.bezierCurveTo(w * 0.62, h + s * h * 0.2, w * 0.75, h + s * h * 0.3, w * 0.5, h + s * h * 0.3); ctx.bezierCurveTo(w * 0.25, h + s * h * 0.3, w * 0.38, h + s * h * 0.2, w * 0.38, h); ctx.lineTo(0, h); }
         if (p.leftTab === 0) ctx.lineTo(0, 0);
-        else {
-            let s = p.leftTab;
-            ctx.lineTo(0, h * 0.62);
-            ctx.bezierCurveTo(s * -w * 0.2, h * 0.62, s * -w * 0.3, h * 0.75, s * -w * 0.3, h * 0.5);
-            ctx.bezierCurveTo(s * -w * 0.3, h * 0.25, s * -w * 0.2, h * 0.38, 0, h * 0.38);
-            ctx.lineTo(0, 0);
-        }
+        else { let s = p.leftTab; ctx.lineTo(0, h * 0.62); ctx.bezierCurveTo(s * -w * 0.2, h * 0.62, s * -w * 0.3, h * 0.75, s * -w * 0.3, h * 0.5); ctx.bezierCurveTo(s * -w * 0.3, h * 0.25, s * -w * 0.2, h * 0.38, 0, h * 0.38); ctx.lineTo(0, 0); }
     }
 
     function drawAll() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
         if (isCompleted) {
             ctx.drawImage(img, boardStartX, boardStartY, puzzleWidth, puzzleHeight);
-            ctx.strokeStyle = '#f1c40f';
-            ctx.lineWidth = 4;
-            ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+            ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
             return;
         }
-
         ctx.save();
-        ctx.fillStyle = 'rgba(236, 240, 241, 0.6)';
-        ctx.fillRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
-        
-        ctx.strokeStyle = '#bdc3c7';
-        ctx.lineWidth = 1.5;
-        pieces.forEach(p => {
-            ctx.save();
-            ctx.translate(p.correctX, p.correctY);
-            buildPiecePath(ctx, p, p.w, p.h);
-            ctx.stroke();
-            ctx.restore();
-        });
-
-        ctx.strokeStyle = '#7f8c8d';
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+        ctx.fillStyle = 'rgba(236, 240, 241, 0.6)'; ctx.fillRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
+        ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 1.5;
+        pieces.forEach(p => { ctx.save(); ctx.translate(p.correctX, p.correctY); buildPiecePath(ctx, p, p.w, p.h); ctx.stroke(); ctx.restore(); });
+        ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 2.5; ctx.strokeRect(boardStartX, boardStartY, puzzleWidth, puzzleHeight);
         ctx.restore();
-
         pieces.forEach(p => { if (p !== selectedPiece) drawPiece(p); });
         if (selectedPiece) drawPiece(selectedPiece);
     }
 
     function drawPiece(p) {
-        ctx.save();
-        ctx.translate(p.currentX, p.currentY);
-        
-        buildPiecePath(ctx, p, p.w, p.h);
-        ctx.clip();
-        
+        ctx.save(); ctx.translate(p.currentX, p.currentY); buildPiecePath(ctx, p, p.w, p.h); ctx.clip();
         ctx.drawImage(img, 0, 0, img.width, img.height, -p.col * p.w, -p.row * p.h, puzzleWidth, puzzleHeight);
-        
-        ctx.lineWidth = p.isLocked ? 1 : 2.5;
-        ctx.strokeStyle = p.isLocked ? 'rgba(0,0,0,0.1)' : '#34495e';
-        ctx.stroke();
-        
-        ctx.restore();
+        ctx.lineWidth = p.isLocked ? 1 : 2.5; ctx.strokeStyle = p.isLocked ? 'rgba(0,0,0,0.1)' : '#34495e'; ctx.stroke(); ctx.restore();
     }
 
     function setupEvents() {
-        canvas.onmousedown = handleDown;
-        canvas.onmousemove = handleMove;
-        canvas.onmouseup = handleUp;
-        canvas.onmouseleave = handleUp;
-        canvas.ontouchstart = (e
+        canvas.onmousedown = handleDown; canvas.onmousemove = handleMove; canvas.onmouseup = handleUp; canvas.onmouseleave = handleUp;
+        canvas.ontouchstart = (e) => { e.preventDefault(); handleDown(e.touches[0]); };
+        canvas.ontouchmove = (e) => { e.preventDefault(); handleMove(e.touches[0]); };
+        canvas.ontouchend = (e) => { e.preventDefault(); handleUp(); };
+    }
+
+    function handleDown(e) {
+        if (isCompleted) return;
+        let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let scaleY = canvas.height / rect.height;
+        let mouseX = (e.clientX - rect.left) * scaleX; let mouseY = (e.clientY - rect.top) * scaleY;
+        for (let i = pieces.length - 1; i >= 0; i--) {
+            let p = pieces[i];
+            if (!p.isLocked && mouseX >= p.currentX && mouseX <= p.currentX + p.w && mouseY >= p.currentY && mouseY <= p.currentY + p.h) {
+                selectedPiece = p; isDragging = true; pieces.splice(i, 1); pieces.push(selectedPiece); break;
+            }
+        }
+    }
+
+    function handleMove(e) {
+        if (!isDragging || !selectedPiece || isCompleted) return;
+        let rect = canvas.getBoundingClientRect(); let scaleX = canvas.width / rect.width; let scaleY = canvas.height / rect.height;
+        selectedPiece.currentX = (e.clientX - rect.left) * scaleX - (pieceWidth / 2);
+        selectedPiece.currentY = (e.clientY - rect.top) * scaleY - (pieceHeight / 2); drawAll();
+    }
+
+    function handleUp() {
+        if (!isDragging || !selectedPiece || isCompleted) return;
+        let diffX = Math.abs(selectedPiece.currentX - selectedPiece.correctX); let diffY = Math.abs(selectedPiece.currentY - selectedPiece.correctY);
+        if (diffX < pieceWidth * 0.25 && diffY < pieceHeight * 0.25) { selectedPiece.currentX = selectedPiece.correctX; selectedPiece.currentY = selectedPiece.correctY; selectedPiece.isLocked = true; }
+        isDragging = false; selectedPiece = null; drawAll(); checkWin();
+    }
+
+    function checkWin() {
+        if (pieces.every(p => p.isLocked)) {
+            isCompleted = true; drawAll(); saveRecord(); safeRemoveItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName);
+            setTimeout(() => {
+                document.getElementById('win-msg').innerText = `${currentUser.className} ${currentUser.name}，恭喜完成《${currentUser.puzzleName}》！`;
+                document.getElementById('win-modal').style.display = 'flex';
+            }, 300);
+        }
+    }
+
+    function closeWinModal() { document.getElementById('win-modal').style.display = 'none'; showLogin(); }
+
+    function saveAndExit() {
+        if (!isCompleted) {
+            let saveData = { gridSize: currentUser.gridSize, pieces: pieces };
+            safeSetItem('puzzleSave_' + currentUser.name + '_' + currentUser.imageName, JSON.stringify(saveData));
+            alert('進度已儲存！下次使用相同姓名與圖片即可繼續。');
+        }
+        showLogin();
+    }
+
+    function saveRecord() {
+        let recordsData = safeGetItem('puzzleRecords');
+        let records = recordsData ? JSON.parse(recordsData) : [];
+        let now = new Date();
+        records.push({
+            className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
+            difficulty: (currentUser.gridSize * currentUser.gridSize) + '片',
+            date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+        });
+        safeSetItem('puzzleRecords', JSON.stringify(records));
+    }
+
+    // 網頁底部立刻執行一次初始化，確保選單出現
+    updateAvailablePuzzles();
+</script>
+</body>
+</html>
