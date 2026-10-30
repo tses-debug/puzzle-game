@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>繪本插畫拼圖挑戰</title>
     <style>
-        /* 整體背景與字體配置 (參考天空藍配色) */
+        /* 整體背景與字體配置 */
         body { 
             font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: #C4E8FB; /* 參考圖的天空藍 */
+            background-color: #C4E8FB; 
             margin: 0; 
             padding: 20px 10px; 
             display: flex; 
@@ -18,14 +18,23 @@
             box-sizing: border-box; 
         }
 
-        /* 主標題樣式 */
-        h1 { 
-            color: #2B2A4C; 
-            font-size: 36px; 
-            margin: 5px 0; 
-            font-weight: 900;
+        /* 👑 活潑彈跳感大標題 (模仿參考圖的繽紛立體效果) */
+        .bouncy-title {
             text-align: center;
-            text-shadow: 2px 2px 0px #FFF;
+            margin: 20px 0 10px 0;
+            font-size: clamp(40px, 9vw, 68px); /* 響應式大字體 */
+            font-weight: 900;
+            white-space: nowrap;
+        }
+        .bouncy-title span {
+            display: inline-block;
+            color: var(--c);
+            -webkit-text-stroke: 4px #FFFFFF; /* 白色粗邊框 */
+            filter: drop-shadow(0px 7px 0px #2B2A4C); /* 深藍色立體陰影 */
+            transform: rotate(var(--r)); /* 每個字的傾斜角度 */
+            margin: 0 1px;
+            font-family: 'Arial Rounded MT Bold', 'Comic Sans MS', 'Microsoft JhengHei', sans-serif;
+            letter-spacing: 2px;
         }
 
         /* 副標題說明文字 */
@@ -39,7 +48,7 @@
             line-height: 1.5;
         }
 
-        /* 畫面容器 (參考圖的立體粗邊白框) */
+        /* 畫面容器 */
         .screen { 
             background: white; 
             padding: 30px; 
@@ -78,7 +87,7 @@
         }
         select:focus, input:focus { background-color: #FFFFFF; border-color: #3498db; }
 
-        /* Q版立體按鈕通用樣式 */
+        /* Q版立體按鈕 */
         button { 
             border: 3px solid #2B2A4C; 
             padding: 12px 25px; 
@@ -91,59 +100,34 @@
             box-shadow: 0px 6px 0px #2B2A4C;
             transition: all 0.1s ease;
         }
-        /* 按鈕按下去的動態效果 */
         button:active {
             transform: translateY(6px);
             box-shadow: 0px 0px 0px #2B2A4C;
         }
 
-        /* 主色按鈕 (參考圖的黃色) */
         .btn-main { background-color: #FACA43; width: 100%; font-size: 20px; padding: 15px; }
         .btn-main:hover { background-color: #FFD659; }
-
-        /* 灰色次要按鈕 */
         .btn-gray { background-color: #E0E0E0; }
         .btn-gray:hover { background-color: #D5D5D5; }
         
         #game-container { flex-grow: 1; position: relative; border: 4px solid #2B2A4C; border-radius: 15px; background-color: #ecf0f1; overflow: hidden; width: 100%; box-shadow: inset 0px 0px 10px rgba(0,0,0,0.1); }
         canvas { display: block; touch-action: none; width: 100%; height: 100%; }
         
-        /* 集章卡樣式更新為立體風格 */
+        /* 集章卡 */
         .stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin: 25px 0; }
         .stamp-slot { 
-            background: #F8F9FA; 
-            border: 3px dashed #A0A0A0; 
-            border-radius: 15px; 
-            padding: 15px 5px; 
-            font-size: 14px; 
-            font-weight: bold; 
-            color: #A0A0A0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            height: 110px; 
+            background: #F8F9FA; border: 3px dashed #A0A0A0; border-radius: 15px; padding: 15px 5px; 
+            font-size: 14px; font-weight: bold; color: #A0A0A0; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; height: 110px; 
         }
-        .stamp-slot.completed { 
-            border: 3px solid #2B2A4C; 
-            background: #FACA43; 
-            color: #2B2A4C; 
-            box-shadow: 0 5px 0 #2B2A4C; 
-        }
+        .stamp-slot.completed { border: 3px solid #2B2A4C; background: #FACA43; color: #2B2A4C; box-shadow: 0 5px 0 #2B2A4C; }
         .stamp-icon { font-size: 35px; margin-bottom: 8px; }
         
         /* 測驗彈視窗 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(43,42,76,0.7); justify-content: center; align-items: center; z-index: 1000; padding: 15px; box-sizing: border-box; }
         .modal-content { 
-            background: white; 
-            padding: 35px 25px; 
-            border-radius: 20px; 
-            border: 4px solid #2B2A4C;
-            text-align: center; 
-            box-shadow: 0 10px 0px #2B2A4C; 
-            max-width: 450px; 
-            width: 100%; 
-            animation: popIn 0.3s ease-out; 
+            background: white; padding: 35px 25px; border-radius: 20px; border: 4px solid #2B2A4C;
+            text-align: center; box-shadow: 0 10px 0px #2B2A4C; max-width: 450px; width: 100%; animation: popIn 0.3s ease-out; 
         }
         .modal-content h2 { color: #2B2A4C; font-weight: 900; margin-top: 0; }
         .modal-content p { color: #2B2A4C; font-weight: bold; line-height: 1.5; }
@@ -162,7 +146,17 @@
 <body>
 
     <!-- 1. 首頁畫面 -->
-    <h1>繪本插畫拼圖挑戰</h1>
+    <!-- 為標題每個字設定不同的顏色與旋轉角度，創造繽紛立體感 -->
+    <h1 class="bouncy-title">
+        <span style="--c:#FF6B81; --r:-6deg;">繪</span>
+        <span style="--c:#2ED573; --r:4deg;">本</span>
+        <span style="--c:#A29BFE; --r:-3deg;">插</span>
+        <span style="--c:#FFA502; --r:5deg;">畫</span>
+        <span style="--c:#FF4757; --r:-5deg;">拼</span>
+        <span style="--c:#1E90FF; --r:3deg;">圖</span>
+        <span style="--c:#FF7F50; --r:-4deg;">挑</span>
+        <span style="--c:#7BED9F; --r:6deg;">戰</span>
+    </h1>
     <p class="subtitle">完成拼圖、答對書名，就能得到一個章。<br>集滿10 個章，即可兌換榮譽券！</p>
 
     <div id="login-screen" class="screen active">
@@ -535,7 +529,7 @@
                 document.getElementById('quiz-feedback').style.color = "#2ecc71";
                 document.getElementById('quiz-feedback').innerText = "資料傳送中，請稍候...";
                 
-                if(GOOGLE_SCRIPT_URL !== '請在此貼上你的_Web_App_網址' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+                if(GOOGLE_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec' && GOOGLE_SCRIPT_URL.startsWith('http')) {
                     let nowTime = new Date().toLocaleString();
                     let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
                     
