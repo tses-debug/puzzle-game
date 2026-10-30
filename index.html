@@ -20,16 +20,13 @@
         select, input { width: 100%; padding: 10px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
         button { background-color: #3498db; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; transition: 0.2s; margin: 5px; }
         button:hover { background-color: #2980b9; }
-        .btn-green { background-color: #2ecc71; font-size: 18px; padding: 12px 25px; }
+        .btn-green { background-color: #2ecc71; font-size: 18px; padding: 12px 25px; width: 100%; }
         .btn-green:hover { background-color: #27ae60; }
         .btn-gray { background-color: #95a5a6; }
         .btn-gray:hover { background-color: #7f8c8d; }
         
         #game-container { flex-grow: 1; position: relative; border: 4px solid #34495e; border-radius: 10px; background-color: #ecf0f1; overflow: hidden; width: 100%; }
         canvas { display: block; touch-action: none; width: 100%; height: 100%; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #bdc3c7; padding: 10px; text-align: center; }
-        th { background-color: #3498db; color: white; }
         
         /* 集章卡樣式 */
         .stamp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; margin: 20px 0; }
@@ -48,7 +45,7 @@
 </head>
 <body>
 
-    <!-- 1. 登入畫面 (極簡版) -->
+    <!-- 1. 登入畫面 -->
     <div id="login-screen" class="screen active">
         <h1>🎨 繪本真實拼圖挑戰</h1>
         <div class="form-group">
@@ -68,8 +65,6 @@
             <input type="text" id="student-name" placeholder="請輸入你的名字" required>
         </div>
         <button class="btn-green" onclick="enterStampCard()">進入我的集章卡</button>
-        <br><br><hr><br>
-        <button class="btn-gray" onclick="showDashboard()">👨‍🏫 教師後台</button>
     </div>
 
     <!-- 2. 集章卡畫面 -->
@@ -77,7 +72,7 @@
         <h2 id="stamp-title">我的集章卡</h2>
         <div class="stamp-grid" id="stamp-grid"></div>
         <button id="draw-puzzle-btn" class="btn-green" onclick="startRandomPuzzle()">🎲 抽取下一關</button>
-        <button class="btn-gray" onclick="switchScreen('login-screen')">返回登入</button>
+        <button class="btn-gray" onclick="switchScreen('login-screen')">登出返回</button>
     </div>
 
     <!-- 3. 遊戲畫面 -->
@@ -92,35 +87,25 @@
         </div>
     </div>
 
-    <!-- 4. 教師後台畫面 (只記錄全破關學生) -->
-    <div id="dashboard-screen" class="screen">
-        <h2>👨‍🏫 全破關榮譽榜</h2>
-        <p>此名單只會顯示「已經完成全部 10 張拼圖」的學生</p>
-        <button class="btn-gray" onclick="switchScreen('login-screen')">返回首頁</button>
-        <button class="btn-gray" onclick="clearRecords()">清空紀錄</button>
-        <table>
-            <thead><tr><th>班級</th><th>姓名</th><th>完成全破關時間</th></tr></thead>
-            <tbody id="records-body"></tbody>
-        </table>
-    </div>
-
-    <!-- 5. 過關測驗彈視窗 (選書名) -->
+    <!-- 4. 過關測驗彈視窗 -->
     <div id="quiz-modal" class="modal">
         <div class="modal-content">
-            <h2>🎉 拼圖完成！</h2>
-            <p>請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
+            <h2 id="quiz-header">🎉 拼圖完成！</h2>
+            <p id="quiz-text">請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
             <div class="quiz-options" id="quiz-options-container"></div>
             <p id="quiz-feedback" style="color: #e74c3c; font-weight: bold; min-height: 24px; margin-top: 10px;"></p>
         </div>
     </div>
 
 <script>
-    // --- 安全存儲機制 ---
+    // 👇👇👇 請在這裡貼上您在 Google Apps Script 取得的「網頁應用程式」網址 👇👇👇
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec';
+    // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+
     let memoryStorage = {};
     function safeGetItem(key) { try { return localStorage.getItem(key) || memoryStorage[key] || null; } catch(e) { return memoryStorage[key] || null; } }
     function safeSetItem(key, value) { try { localStorage.setItem(key, value); } catch(e) { memoryStorage[key] = value; } }
     function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) { delete memoryStorage[key]; } }
-    // -------------------
 
     const allPuzzles = [
         { file: '12婆姐.jpg', title: '12婆姐' },
@@ -141,8 +126,7 @@
     
     let pieces = [];
     let cols, rows;
-    let puzzleWidth, puzzleHeight;
-    let pieceWidth, pieceHeight;
+    let puzzleWidth, puzzleHeight, pieceWidth, pieceHeight;
     let boardStartX, boardStartY;
     
     let selectedPiece = null;
@@ -155,7 +139,6 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // 自動判斷難度
     function determineGridSize(className) {
         if (className.includes('一年') || className.includes('二年')) return 4;
         if (className.includes('三年') || className.includes('四年')) return 5;
@@ -167,12 +150,7 @@
         if (!name) return alert('請先輸入姓名！');
         let className = document.getElementById('class-select').value;
         
-        currentUser = {
-            className: className,
-            name: name,
-            gridSize: determineGridSize(className)
-        };
-
+        currentUser = { className: className, name: name, gridSize: determineGridSize(className) };
         document.getElementById('stamp-title').innerText = `${className} ${name} 的集章卡`;
         
         let recordsData = safeGetItem('puzzleRecords');
@@ -205,7 +183,6 @@
             btn.disabled = false;
             btn.style.backgroundColor = "#2ecc71";
         }
-
         switchScreen('stamp-screen');
     }
 
@@ -248,8 +225,7 @@
 
     function initPuzzle() {
         let container = document.getElementById('game-container');
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        canvas.width = container.clientWidth; canvas.height = container.clientHeight;
         cols = currentUser.gridSize; rows = currentUser.gridSize;
 
         let isPortrait = canvas.height > canvas.width;
@@ -387,7 +363,10 @@
     }
 
     function triggerQuiz() {
+        document.getElementById('quiz-header').innerText = "🎉 拼圖完成！";
+        document.getElementById('quiz-text').innerHTML = "請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small>";
         document.getElementById('quiz-feedback').innerText = "";
+        
         let correctTitle = currentUser.puzzleName;
         let wrongOptions = allPuzzles.filter(p => p.title !== correctTitle).map(p => p.title);
         
@@ -402,19 +381,56 @@
 
     function checkAnswer(selectedTitle) {
         if (selectedTitle === currentUser.puzzleName) {
-            alert('🎉 答對了！恭喜獲得一枚印章！');
-            document.getElementById('quiz-modal').style.display = 'none';
-            saveRecord();
             safeRemoveItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
             
-            // 檢查是否全部破關
+            // 存入單機紀錄 (供集章卡顯示用)
             let recordsData = safeGetItem('puzzleRecords');
             let records = recordsData ? JSON.parse(recordsData) : [];
-            let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
-            if (completedCount === 10) {
-                alert('🏆 狂賀！你已經收集到所有 10 枚印章，完成最終挑戰！請告訴老師來兌換獎勵！');
+            let alreadySaved = records.some(r => r.name === currentUser.name && r.className === currentUser.className && r.puzzle === currentUser.puzzleName);
+            
+            if (!alreadySaved) {
+                let now = new Date();
+                records.push({
+                    className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
+                    date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
+                });
+                safeSetItem('puzzleRecords', JSON.stringify(records));
             }
-            enterStampCard();
+
+            // 檢查是否收集滿 10 個
+            let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
+            
+            if (completedCount === 10) {
+                document.getElementById('quiz-header').innerText = "🏆 最終挑戰完成！";
+                document.getElementById('quiz-text').innerHTML = "狂賀！你已經收集到所有 10 枚印章！<br>正在將你的過關紀錄傳送給老師...";
+                document.getElementById('quiz-options-container').innerHTML = "";
+                document.getElementById('quiz-feedback').style.color = "#2ecc71";
+                document.getElementById('quiz-feedback').innerText = "資料傳送中，請稍候...";
+                
+                // 發送至 Google Sheets
+                if(GOOGLE_SCRIPT_URL !== '請在此貼上你的_Web_App_網址' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+                    let nowTime = new Date().toLocaleString();
+                    let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
+                    
+                    fetch(url, { mode: 'no-cors' }).then(() => {
+                        alert('✅ 你的全破關紀錄已經成功傳送給老師囉！請去找老師兌換獎勵！');
+                        document.getElementById('quiz-modal').style.display = 'none';
+                        enterStampCard();
+                    }).catch(err => {
+                        alert('⚠️ 傳送紀錄失敗，請截圖本畫面通知老師。');
+                        document.getElementById('quiz-modal').style.display = 'none';
+                        enterStampCard();
+                    });
+                } else {
+                    alert('⚠️ 老師的雲端網址尚未設定，請通知老師。');
+                    document.getElementById('quiz-modal').style.display = 'none';
+                    enterStampCard();
+                }
+            } else {
+                alert('🎉 答對了！恭喜獲得一枚印章！');
+                document.getElementById('quiz-modal').style.display = 'none';
+                enterStampCard();
+            }
         } else {
             document.getElementById('quiz-feedback').innerText = "哎呀，答錯囉！請仔細觀察圖片再試一次！";
         }
@@ -427,62 +443,6 @@
             alert('進度已儲存！下次進來可以直接繼續。');
         }
         enterStampCard();
-    }
-
-    function saveRecord() {
-        let recordsData = safeGetItem('puzzleRecords');
-        let records = recordsData ? JSON.parse(recordsData) : [];
-        
-        // 避免重複寫入同一題
-        let alreadySaved = records.some(r => r.name === currentUser.name && r.className === currentUser.className && r.puzzle === currentUser.puzzleName);
-        if (!alreadySaved) {
-            let now = new Date();
-            records.push({
-                className: currentUser.className, name: currentUser.name, puzzle: currentUser.puzzleName,
-                date: now.toLocaleDateString() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0')
-            });
-            safeSetItem('puzzleRecords', JSON.stringify(records));
-        }
-    }
-
-    function showDashboard() {
-        let recordsData = safeGetItem('puzzleRecords');
-        let records = recordsData ? JSON.parse(recordsData) : [];
-        
-        // 依照學生分組，計算每個人完成的印章數
-        let students = {};
-        records.forEach(r => {
-            let key = r.className + "_" + r.name;
-            if (!students[key]) {
-                students[key] = { className: r.className, name: r.name, completed: new Set(), lastDate: r.date };
-            }
-            students[key].completed.add(r.puzzle);
-            students[key].lastDate = r.date;
-        });
-
-        let tbody = document.getElementById('records-body');
-        tbody.innerHTML = '';
-        
-        let hasGraduates = false;
-        for (let key in students) {
-            if (students[key].completed.size === 10) { // 只顯示完成 10 張的人
-                hasGraduates = true;
-                tbody.innerHTML += `<tr><td>${students[key].className}</td><td>${students[key].name}</td><td>${students[key].lastDate}</td></tr>`;
-            }
-        }
-
-        if (!hasGraduates) {
-            tbody.innerHTML = `<tr><td colspan="3" style="padding: 20px; color: #7f8c8d;">目前尚未有完成全部 10 幅拼圖的學生。</td></tr>`;
-        }
-        
-        switchScreen('dashboard-screen');
-    }
-
-    function clearRecords() {
-        if(confirm('確定要清空所有紀錄嗎？(包含學生的集章卡進度都會歸零喔)')) {
-            safeRemoveItem('puzzleRecords');
-            showDashboard();
-        }
     }
 </script>
 </body>
