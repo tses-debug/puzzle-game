@@ -222,7 +222,7 @@
     };
 
     // 👇👇👇 雲端試算表 Web App 網址 👇👇👇
-    const GOOGLE_SCRIPT_URL = 'https://docs.google.com/spreadsheets/d/1G7vP73nP8Zd-wz3VibIqTlSMIzCSVNccFFT3SmpTexc/edit?gid=0#gid=0';
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec';
     // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
     let memoryStorage = {};
@@ -568,7 +568,7 @@
                 document.getElementById('quiz-feedback').style.color = "#2ecc71";
                 document.getElementById('quiz-feedback').innerText = "資料傳送中，請稍候...";
                 
-                if(GOOGLE_SCRIPT_URL !== '請在此貼上你的_Web_App_網址' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+                if(GOOGLE_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec' && GOOGLE_SCRIPT_URL.startsWith('http')) {
                     let nowTime = new Date().toLocaleString();
                     let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
                     
