@@ -24,16 +24,15 @@
         .bouncy-title {
             text-align: center;
             margin: 20px 0 10px 0;
-            font-size: clamp(45px, 10vw, 75px); /* 放大字體 */
+            font-size: clamp(45px, 10vw, 75px); 
             white-space: nowrap;
         }
         .bouncy-title span {
             display: inline-block;
             color: var(--c);
-            /* 使用剛載入的卡通字體 */
             font-family: 'ZCOOL KuaiLe', 'Comic Sans MS', sans-serif;
-            font-weight: 400; /* 此字體本身已經很粗 */
-            text-shadow: 4px 6px 0px #2B2A4C; /* 實心深藍色右下陰影 */
+            font-weight: 400; 
+            text-shadow: 4px 6px 0px #2B2A4C; 
             transform: rotate(var(--r)); 
             margin: 0 2px;
             letter-spacing: 2px;
@@ -143,7 +142,6 @@
 <body>
 
     <!-- 1. 首頁畫面 -->
-    <!-- 套用與參考圖完全一致的：粉、黃、綠、紫、橘、粉、黃、綠 -->
     <h1 class="bouncy-title">
         <span style="--c:#FF5A79; --r:-6deg;">繪</span>
         <span style="--c:#FFC312; --r:4deg;">本</span>
@@ -207,9 +205,23 @@
     </div>
 
 <script>
-    // 👇👇👇 請在這裡貼上您在 Google Apps Script 取得的「網頁應用程式」網址 👇👇👇
-    const GOOGLE_SCRIPT_URL = '請在此貼上你的_Web_App_網址';
-    // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+    // ==========================================
+    // 🛡️ 學生名單資料庫：請在這裡貼上各班的真實名單
+    // 每個名字用雙引號包起來，中間用逗號隔開
+    // ==========================================
+    const studentRoster = {
+        "一年甲班": ["曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"], // 範例，請替換成您的名單
+        "二年甲班": ["許聿閎", "林晨宇", "吳祥睿", "林献棠", "許祖鋮", "曾柏勳", "林宸玄", "顏沐呈", "洪浩鈞", "周奕劭", "何琴孋", "吳采霏", "吳訢蕾", "李侑靜", "許祖銥", "李佾輮", "田雨婕", "林采誼"],
+        "三年甲班": ["吳泓叡", "曾品岳", "鄭宇皓", "曾佑鈞", "王翊鋼", "黃翊賢", "林思騏", "邱鼎益", "曾鳳鳴", "林詣諠", "宋浣菲", "徐以芯", "林亞忻", "賴歆惠", "簡子芸"],
+        "三年乙班": ["廖翊傑", "劉宸宇", "林宣聿", "蔡岩辰", "趙友弘", "劉喬丹", "蕭仲緯", "曾俊霖", "林宥齊", "陳祖儀", "陳鈺儒", "廖辰旻", "黃芹岑", "鄭羽涵", "吳羽桐"],
+        "四年甲班": ["周奕呈", "許煒彤", "林彥寬", "曾翊洋", "曾野安", "黃榮森", "范站傑", "林寬承", "簡睿學", "方凱威", "曾冠宸", "賴亭瑄", "王語緁", "李侑蓁", "劉芯禔", "簡偌安", "李云宥", "黃榆唐"],
+        "五年甲班": ["林芃多", "姚亮佐", "姚亮佑", "石茂亨", "林卿華", "廖翊翔", "曾俊傑", "廖永成", "林佑宸", "黃子辰", "黃聖喆", "賴岳廷", "黃立愷", "趙友婕", "蔡宛楹", "鄒欣妘", "簡羽彤", "蕭佳恩", "蔡薿箴", "曾乙庭", "曾千嵐", "曾郁瑄", "何涓妮", "張芷瑄"],
+        "六年甲班": ["劉川鋒", "劉紘睿", "劉冠廷", "鄭凱勻", "李翊鵬", "曾野川", "林寬瑜", "陳克宇", "賴暐傑", "簡宏睿", "蕭博荃", "白晏碩", "蔡城霖", "黃沛文", "林家華", "何翌瑄", "朱育彤", "吳采霓", "何旻倩", "林昀槿", "黃語棠", "吳妤嫻", "林妤璇", "黃廷紜", "曾苡喬", "黃榆茜"]
+    };
+
+    // 👇👇👇 雲端試算表 Web App 網址 👇👇👇
+    const GOOGLE_SCRIPT_URL = 'https://docs.google.com/spreadsheets/d/1G7vP73nP8Zd-wz3VibIqTlSMIzCSVNccFFT3SmpTexc/edit?gid=0#gid=0';
+    // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
     let memoryStorage = {};
     function safeGetItem(key) { try { return localStorage.getItem(key) || memoryStorage[key] || null; } catch(e) { return memoryStorage[key] || null; } }
@@ -263,6 +275,14 @@
         if (!name) return alert('請先輸入姓名！');
         let className = document.getElementById('class-select').value;
         
+        // ==========================================
+        // 🛡️ 名單核對機制
+        // ==========================================
+        let validNames = studentRoster[className] || [];
+        if (validNames.length > 0 && !validNames.includes(name)) {
+            return alert('❌ 系統找不到這個名字喔！\n請確認「班級」是否選對，並輸入完整的「中文全名」。\n(請不要亂填名字喔！)');
+        }
+
         currentUser = { className: className, name: name, gridSize: determineGridSize(className) };
         document.getElementById('stamp-title').innerText = `${className} ${name} 的集章卡`;
         
@@ -525,7 +545,7 @@
                 document.getElementById('quiz-feedback').style.color = "#2ecc71";
                 document.getElementById('quiz-feedback').innerText = "資料傳送中，請稍候...";
                 
-                if(GOOGLE_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+                if(GOOGLE_SCRIPT_URL !== '請在此貼上你的_Web_App_網址' && GOOGLE_SCRIPT_URL.startsWith('http')) {
                     let nowTime = new Date().toLocaleString();
                     let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
                     
