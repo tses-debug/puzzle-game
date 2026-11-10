@@ -157,7 +157,7 @@
     <div id="login-screen" class="screen active">
         <div class="form-group">
             <label>班級</label>
-            <select id="class-select">
+            <select id="class-select" onchange="clearLoginError()">
                 <option value="一年甲班">一年甲班</option>
                 <option value="二年甲班">二年甲班</option>
                 <option value="三年甲班">三年甲班</option>
@@ -169,7 +169,10 @@
         </div>
         <div class="form-group">
             <label>姓名</label>
-            <input type="text" id="student-name" placeholder="請輸入全名" required>
+            <!-- 加上 oninput，學生一打字就會自動清除錯誤訊息 -->
+            <input type="text" id="student-name" placeholder="請輸入全名" required oninput="clearLoginError()">
+            <!-- 新增：畫面上專屬的錯誤訊息顯示區 -->
+            <div id="login-error" style="color: #FF4757; font-weight: bold; margin-top: 12px; display: none; text-align: center; font-size: 16px; background-color: #FFEAA7; padding: 10px; border-radius: 8px; border: 2px solid #FF4757;"></div>
         </div>
         <button class="btn-main" onclick="enterStampCard()">開始挑戰</button>
     </div>
@@ -207,7 +210,6 @@
 <script>
     // ==========================================
     // 🛡️ 學生名單資料庫：請在這裡貼上各班的真實名單
-    // 每個名字用雙引號包起來，中間用逗號隔開
     // ==========================================
     const studentRoster = {
         "一年甲班": ["曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"], // 範例，請替換成您的名單
@@ -255,6 +257,11 @@
     let currentUser = {};
     let isCompleted = false;
 
+    // 清除登入畫面的錯誤訊息
+    function clearLoginError() {
+        document.getElementById('login-error').style.display = 'none';
+    }
+
     function switchScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(screenId).classList.add('active');
@@ -262,6 +269,10 @@
         let isHome = (screenId === 'login-screen');
         document.querySelector('h1').style.display = isHome ? 'block' : 'none';
         document.querySelector('.subtitle').style.display = isHome ? 'block' : 'none';
+        
+        if (isHome) {
+            clearLoginError(); // 回首頁時自動清除錯誤
+        }
     }
 
     function determineGridSize(className) {
@@ -272,16 +283,28 @@
 
     function enterStampCard() {
         let name = document.getElementById('student-name').value.trim();
-        if (!name) return alert('請先輸入姓名！');
+        let errorDiv = document.getElementById('login-error');
+        
+        if (!name) {
+            errorDiv.innerHTML = '❌ 請先輸入姓名喔！';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
         let className = document.getElementById('class-select').value;
         
         // ==========================================
-        // 🛡️ 名單核對機制
+        // 🛡️ 名單核對機制 (錯誤時顯示在畫面上)
         // ==========================================
         let validNames = studentRoster[className] || [];
         if (validNames.length > 0 && !validNames.includes(name)) {
-            return alert('❌ 系統找不到這個名字喔！\n請確認「班級」是否選對，並輸入完整的「中文全名」。\n(請不要亂填名字喔！)');
+            errorDiv.innerHTML = `❌ 找不到「${name}」這個名字喔！<br>請確認班級是否選對，並輸入完整的「中文全名」。`;
+            errorDiv.style.display = 'block';
+            return;
         }
+
+        // 登入成功，清除錯誤訊息
+        errorDiv.style.display = 'none';
 
         currentUser = { className: className, name: name, gridSize: determineGridSize(className) };
         document.getElementById('stamp-title').innerText = `${className} ${name} 的集章卡`;
