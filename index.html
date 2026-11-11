@@ -6,7 +6,6 @@
     <title>繪本插畫拼圖挑戰</title>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
     <style>
-        /* 整體背景與字體配置 */
         body { 
             font-family: 'Segoe UI', 'Microsoft JhengHei', Tahoma, Geneva, Verdana, sans-serif; 
             background-color: #C4E8FB; 
@@ -123,7 +122,7 @@
             text-align: center; box-shadow: 0 10px 0px #2B2A4C; max-width: 450px; width: 100%; animation: popIn 0.3s ease-out; 
         }
         .modal-content h2 { color: #2B2A4C; font-weight: 900; margin-top: 0; }
-        .modal-content p { color: #2B2A4C; font-weight: bold; line-height: 1.5; }
+        .modal-content p { color: #2B2A4C; font-weight: bold; line-height: 1.5; white-space: pre-line; }
         
         .quiz-options { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
         .quiz-options button { background-color: #FACA43; font-size: 16px; padding: 15px; margin: 0; width: 100%; }
@@ -184,6 +183,7 @@
         </div>
     </div>
 
+    <!-- 測驗彈視窗 -->
     <div id="quiz-modal" class="modal">
         <div class="modal-content">
             <h2 id="quiz-header">🎉 拼圖完成！</h2>
@@ -193,12 +193,19 @@
         </div>
     </div>
 
+    <!-- 全新設計的自訂警告訊息視窗 (用來取代會當機的 alert) -->
+    <div id="custom-alert-modal" class="modal" style="z-index: 2000;">
+        <div class="modal-content">
+            <h2 id="custom-alert-title" style="color: #FF5A79;">提示</h2>
+            <p id="custom-alert-msg" style="font-size: 18px; margin: 20px 0;"></p>
+            <button class="btn-main" onclick="closeCustomAlert()" style="width: 100%; margin-top: 15px;">確 定</button>
+        </div>
+    </div>
+
 <script>
-    // ==========================================
-    // 🛡️ 學生名單資料庫：請在這裡貼上各班的真實名單
-    // ==========================================
+    // 學生名單
     const studentRoster = {
-         "一年甲班": ["測試","曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"], // 範例，請替換成您的名單
+        "一年甲班": ["測試","曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"],
         "二年甲班": ["許聿閎", "林晨宇", "吳祥睿", "林献棠", "許祖鋮", "曾柏勳", "林宸玄", "顏沐呈", "洪浩鈞", "周奕劭", "何琴孋", "吳采霏", "吳訢蕾", "李侑靜", "許祖銥", "李佾輮", "田雨婕", "林采誼"],
         "三年甲班": ["吳泓叡", "曾品岳", "鄭宇皓", "曾佑鈞", "王翊鋼", "黃翊賢", "林思騏", "邱鼎益", "曾鳳鳴", "林詣諠", "宋浣菲", "徐以芯", "林亞忻", "賴歆惠", "簡子芸"],
         "三年乙班": ["廖翊傑", "劉宸宇", "林宣聿", "蔡岩辰", "趙友弘", "劉喬丹", "蕭仲緯", "曾俊霖", "林宥齊", "陳祖儀", "陳鈺儒", "廖辰旻", "黃芹岑", "鄭羽涵", "吳羽桐"],
@@ -207,14 +214,26 @@
         "六年甲班": ["劉川鋒", "劉紘睿", "劉冠廷", "鄭凱勻", "李翊鵬", "曾野川", "林寬瑜", "陳克宇", "賴暐傑", "簡宏睿", "蕭博荃", "白晏碩", "蔡城霖", "黃沛文", "林家華", "何翌瑄", "朱育彤", "吳采霓", "何旻倩", "林昀槿", "黃語棠", "吳妤嫻", "林妤璇", "黃廷紜", "曾苡喬", "黃榆茜"]
     };
 
-    // 👇👇👇 雲端試算表 Web App 網址 👇👇👇
+    // 專屬雲端接收網址
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec';
-    // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
     let memoryStorage = {};
     function safeGetItem(key) { try { return localStorage.getItem(key) || memoryStorage[key] || null; } catch(e) { return memoryStorage[key] || null; } }
     function safeSetItem(key, value) { try { localStorage.setItem(key, value); } catch(e) { memoryStorage[key] = value; } }
     function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) { delete memoryStorage[key]; } }
+
+    // 🌟 全新自訂警告訊息函式 (取代 alert)
+    let customAlertCallback = null;
+    function showCustomAlert(title, message, callback) {
+        document.getElementById('custom-alert-title').innerText = title;
+        document.getElementById('custom-alert-msg').innerText = message;
+        document.getElementById('custom-alert-modal').style.display = 'flex';
+        customAlertCallback = callback;
+    }
+    window.closeCustomAlert = function() {
+        document.getElementById('custom-alert-modal').style.display = 'none';
+        if (customAlertCallback) customAlertCallback();
+    }
 
     const allPuzzles = [
         { file: '12婆姐.jpg', title: '12婆姐' },
@@ -254,10 +273,9 @@
         return 6; 
     }
 
-    // 🌟 全新新增：專屬傳送雲端功能
-    function sendRecordToTeacher() {
-        // 改成這樣：
-            if(GOOGLE_SCRIPT_URL.startsWith('http')) {
+    // 🌟 修改後的雲端傳送功能 (不再呼叫原生 alert)
+    window.sendRecordToTeacher = function() {
+        if(GOOGLE_SCRIPT_URL.startsWith('http')) {
             let nowTime = new Date().toLocaleString();
             let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
 
@@ -268,20 +286,17 @@
             btn.style.boxShadow = "none";
 
             fetch(url, { mode: 'no-cors' }).then(() => {
-                alert('✅ 你的全破關紀錄已經成功傳送給老師囉！請帶著榮譽券去找老師兌換獎勵！');
+                showCustomAlert("🎉 恭喜破關", "你的全破關紀錄已經成功傳送給老師囉！\n請帶著榮譽券去找老師兌換獎勵！", null);
                 btn.innerText = "🎉 紀錄已成功傳送！";
             }).catch(err => {
-                alert('⚠️ 傳送失敗，請檢查網路連線，然後再試一次。');
-                // 失敗時恢復為綠色按鈕讓學生補交
+                showCustomAlert("⚠️ 傳送失敗", "傳送失敗，請檢查網路連線，然後點擊按鈕再試一次。", null);
                 btn.innerText = "📤 點我補交過關紀錄";
                 btn.disabled = false;
                 btn.style.backgroundColor = "#1DD1A1";
                 btn.style.boxShadow = "0px 6px 0px #10AC84";
             });
-        } else {
-            alert('⚠️ 老師的雲端網址尚未設定，請先到程式碼中貼上正確的 Web App 網址。');
         }
-    }
+    };
 
     function enterStampCard() {
         let name = document.getElementById('student-name').value.trim();
@@ -315,33 +330,32 @@
         let btn = document.getElementById('draw-puzzle-btn');
         let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
         
-        // 🌟 修正點：集滿 10 個章時，變成綠色的「補交傳送按鈕」
         if (completedTitles.length === allPuzzles.length) {
             btn.innerText = "📤 點我傳送全破關紀錄";
             btn.disabled = false;
-            btn.style.backgroundColor = "#1DD1A1"; // 綠色醒目按鈕
+            btn.style.backgroundColor = "#1DD1A1";
             btn.style.color = "#2B2A4C";
             btn.style.boxShadow = "0px 6px 0px #10AC84";
-            btn.onclick = sendRecordToTeacher;
+            btn.setAttribute("onclick", "sendRecordToTeacher()");
         } else if (savedDataStr) {
             btn.innerText = "▶ 繼續未完成的關卡";
             btn.disabled = false;
             btn.style.backgroundColor = "#FACA43";
             btn.style.color = "#2B2A4C";
             btn.style.boxShadow = "0px 6px 0px #2B2A4C";
-            btn.onclick = startRandomPuzzle;
+            btn.setAttribute("onclick", "startRandomPuzzle()");
         } else {
             btn.innerText = "🎲 抽取神秘下一關";
             btn.disabled = false;
             btn.style.backgroundColor = "#FACA43";
             btn.style.color = "#2B2A4C";
             btn.style.boxShadow = "0px 6px 0px #2B2A4C";
-            btn.onclick = startRandomPuzzle;
+            btn.setAttribute("onclick", "startRandomPuzzle()");
         }
         switchScreen('stamp-screen');
     }
 
-    function startRandomPuzzle() {
+    window.startRandomPuzzle = function() {
         isCompleted = false;
         document.getElementById('game-title').innerText = "❓ 神秘拼圖挑戰中...";
         let saveKey = `puzzleSave_${currentUser.className}_${currentUser.name}`;
@@ -359,18 +373,20 @@
         let completedTitles = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).map(r => r.puzzle);
         
         let available = allPuzzles.filter(p => !completedTitles.includes(p.title));
-        if (available.length === 0) return alert('你已經獲得所有印章囉！');
+        if (available.length === 0) return showCustomAlert("提示", "你已經獲得所有印章囉！", null);
 
         let randomTarget = available[Math.floor(Math.random() * available.length)];
         currentUser.imageName = randomTarget.file;
         currentUser.puzzleName = randomTarget.title;
         loadAndStartCanvas();
-    }
+    };
 
     function loadAndStartCanvas() {
         switchScreen('game-screen');
         img.onload = () => { document.getElementById('loading-msg').style.display = 'none'; initPuzzle(); };
-        img.onerror = () => { alert('找不到圖片檔，請確認圖片已上傳。'); enterStampCard(); };
+        img.onerror = () => { 
+            showCustomAlert("⚠️ 錯誤", "找不到圖片檔，請確認圖片已上傳。", function(){ enterStampCard(); }); 
+        };
         document.getElementById('loading-msg').style.display = 'block';
         img.src = currentUser.imageName;
     }
@@ -527,7 +543,7 @@
         document.getElementById('quiz-modal').style.display = 'flex';
     }
 
-    function checkAnswer(selectedTitle) {
+    window.checkAnswer = function(selectedTitle) {
         if (selectedTitle === currentUser.puzzleName) {
             safeRemoveItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
             
@@ -546,30 +562,35 @@
 
             let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
             
-            // 🌟 修正點：集滿 10 個時，自動觸發傳送功能
+            // 🌟 取代原本的 alert，並在關閉視窗後自動傳送
             if (completedCount === 10) {
-                alert('🏆 狂賀！你已經收集到所有 10 枚印章！\n按下確定後，系統將自動幫你把紀錄傳送給老師！');
                 document.getElementById('quiz-modal').style.display = 'none';
-                enterStampCard();
-                sendRecordToTeacher();
+                showCustomAlert("🏆 最終挑戰完成", "狂賀！你已經收集到所有 10 枚印章！\n按下確定後，系統將自動幫你把紀錄傳送給老師！", function() {
+                    enterStampCard();
+                    sendRecordToTeacher();
+                });
             } else {
-                alert('🎉 答對了！恭喜獲得一枚印章！');
                 document.getElementById('quiz-modal').style.display = 'none';
-                enterStampCard();
+                showCustomAlert("🎉 太棒了", "答對了！恭喜獲得一枚印章！", function() {
+                    enterStampCard();
+                });
             }
         } else {
             document.getElementById('quiz-feedback').innerText = "哎呀，答錯囉！請仔細觀察圖片再試一次！";
         }
-    }
+    };
 
-    function saveAndExit() {
+    window.saveAndExit = function() {
         if (!isCompleted) {
             let saveData = { imageName: currentUser.imageName, puzzleName: currentUser.puzzleName, gridSize: currentUser.gridSize, pieces: pieces };
             safeSetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`, JSON.stringify(saveData));
-            alert('進度已儲存！下次點擊「繼續未完成的關卡」即可繼續。');
+            showCustomAlert("💾 存檔成功", "進度已儲存！下次點擊「繼續未完成的關卡」即可繼續。", function() {
+                enterStampCard();
+            });
+        } else {
+            enterStampCard();
         }
-        enterStampCard();
-    }
+    };
 </script>
 </body>
 </html>
