@@ -561,7 +561,7 @@
 
             let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
             
-            if (completedCount === 1) {
+            if (completedCount === 10) {
                 document.getElementById('quiz-header').innerText = "🏆 最終挑戰完成！";
                 document.getElementById('quiz-text').innerHTML = "狂賀！你已經收集到所有 10 枚印章！<br>正在將你的過關紀錄傳送給老師...";
                 document.getElementById('quiz-options-container').innerHTML = "";
