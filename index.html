@@ -212,7 +212,7 @@
     // 🛡️ 學生名單資料庫：請在這裡貼上各班的真實名單
     // ==========================================
     const studentRoster = {
-        "一年甲班": ["曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"], // 範例，請替換成您的名單
+        "一年甲班": ["測試","曾偉榤", "許泰元", "方子衡", "廖浩丞", "曾劭威", "游曜褀", "朱育正", "曾韋喆", "巫宥澄", "李承曄", "吳承恩", "林宣辰", "李彥廷", "陳韋志", "張擎", "廖苡涵", "黃郁芩", "姜東律", "曾尹伶", "鐘孟嫄", "陳禹潔", "洪婕綾", "簡辰芸"], // 範例，請替換成您的名單
         "二年甲班": ["許聿閎", "林晨宇", "吳祥睿", "林献棠", "許祖鋮", "曾柏勳", "林宸玄", "顏沐呈", "洪浩鈞", "周奕劭", "何琴孋", "吳采霏", "吳訢蕾", "李侑靜", "許祖銥", "李佾輮", "田雨婕", "林采誼"],
         "三年甲班": ["吳泓叡", "曾品岳", "鄭宇皓", "曾佑鈞", "王翊鋼", "黃翊賢", "林思騏", "邱鼎益", "曾鳳鳴", "林詣諠", "宋浣菲", "徐以芯", "林亞忻", "賴歆惠", "簡子芸"],
         "三年乙班": ["廖翊傑", "劉宸宇", "林宣聿", "蔡岩辰", "趙友弘", "劉喬丹", "蕭仲緯", "曾俊霖", "林宥齊", "陳祖儀", "陳鈺儒", "廖辰旻", "黃芹岑", "鄭羽涵", "吳羽桐"],
@@ -561,7 +561,7 @@
 
             let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
             
-            if (completedCount === 10) {
+            if (completedCount === 1) {
                 document.getElementById('quiz-header').innerText = "🏆 最終挑戰完成！";
                 document.getElementById('quiz-text').innerHTML = "狂賀！你已經收集到所有 10 枚印章！<br>正在將你的過關紀錄傳送給老師...";
                 document.getElementById('quiz-options-container').innerHTML = "";
@@ -573,7 +573,7 @@
                     let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
                     
                     fetch(url, { mode: 'no-cors' }).then(() => {
-                        alert('✅ 你的全破關紀錄已經成功傳送給老師囉！請帶著榮譽券去找老師兌換獎勵！');
+                        alert('✅ 你的全破關紀錄已經成功傳送給老師囉！請帶著平板去找老師兌換獎勵！');
                         document.getElementById('quiz-modal').style.display = 'none';
                         enterStampCard();
                     }).catch(err => {
