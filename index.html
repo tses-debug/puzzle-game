@@ -256,7 +256,8 @@
 
     // 🌟 全新新增：專屬傳送雲端功能
     function sendRecordToTeacher() {
-        if(GOOGLE_SCRIPT_URL !== '' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+        // 改成這樣：
+            if(GOOGLE_SCRIPT_URL.startsWith('http')) {
             let nowTime = new Date().toLocaleString();
             let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
 
