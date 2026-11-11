@@ -256,7 +256,7 @@
 
     // 🌟 全新新增：專屬傳送雲端功能
     function sendRecordToTeacher() {
-        if(GOOGLE_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec' && GOOGLE_SCRIPT_URL.startsWith('http')) {
+        if(GOOGLE_SCRIPT_URL !== '' && GOOGLE_SCRIPT_URL.startsWith('http')) {
             let nowTime = new Date().toLocaleString();
             let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
 
