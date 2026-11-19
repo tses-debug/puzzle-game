@@ -94,13 +94,16 @@
             box-shadow: 0px 6px 0px #2B2A4C;
             transition: all 0.1s ease;
         }
-        button:active {
+        button:active:not(:disabled) {
             transform: translateY(6px);
             box-shadow: 0px 0px 0px #2B2A4C;
         }
+        button:disabled {
+            cursor: not-allowed;
+        }
 
         .btn-main { background-color: #FACA43; width: 100%; font-size: 20px; padding: 15px; }
-        .btn-main:hover { background-color: #FFD659; }
+        .btn-main:hover:not(:disabled) { background-color: #FFD659; }
         .btn-gray { background-color: #E0E0E0; }
         .btn-gray:hover { background-color: #D5D5D5; }
         
@@ -159,7 +162,7 @@
         </div>
         <div class="form-group">
             <label>姓名</label>
-            <input type="text" id="student-name" placeholder="請輸入全名" required oninput="clearLoginError()">
+            <input type="text" id="student-name" placeholder="請輸入全名" required oninput="clearLoginError()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <div id="login-error" style="color: #FF4757; font-weight: bold; margin-top: 12px; display: none; text-align: center; font-size: 16px; background-color: #FFEAA7; padding: 10px; border-radius: 8px; border: 2px solid #FF4757;"></div>
         </div>
         <button class="btn-main" onclick="enterStampCard()">開始挑戰</button>
@@ -183,17 +186,15 @@
         </div>
     </div>
 
-    <!-- 測驗彈視窗 -->
     <div id="quiz-modal" class="modal">
         <div class="modal-content">
             <h2 id="quiz-header">🎉 拼圖完成！</h2>
-            <p id="quiz-text">請問這幅完整的畫作，是出自哪一本繪本呢？<br><small>(答對才能獲得印章喔！)</small></p>
+            <p id="quiz-text">請問這幅完整的畫作，是出自哪一本繪本呢？<br><small style='color:#3498db;'>(答對才能獲得印章喔！)</small></p>
             <div class="quiz-options" id="quiz-options-container"></div>
             <p id="quiz-feedback" style="color: #e74c3c; font-weight: bold; min-height: 24px; margin-top: 15px;"></p>
         </div>
     </div>
 
-    <!-- 全新設計的自訂警告訊息視窗 (用來取代會當機的 alert) -->
     <div id="custom-alert-modal" class="modal" style="z-index: 2000;">
         <div class="modal-content">
             <h2 id="custom-alert-title" style="color: #FF5A79;">提示</h2>
@@ -203,7 +204,6 @@
     </div>
 
 <script>
-    // 學生名單
     const studentRoster = {
         "一年甲班": ["1號","2號", "3號", "4號", "5號", "6號", "7號", "8號", "9號", "10號", "11號", "12號", "13號", "14號", "15號", "16號", "17號", "18號", "19號", "20號", "21號", "22號", "23號"],
         "二年甲班": ["許聿閎", "林晨宇", "吳祥睿", "林献棠", "許祖鋮", "曾柏勳", "林宸玄", "顏沐呈", "洪浩鈞", "周奕劭", "何琴孋", "吳采霏", "吳訢蕾", "李侑靜", "許祖銥", "李佾輮", "田雨婕", "林采誼"],
@@ -214,7 +214,6 @@
         "六年甲班": ["劉川鋒", "劉紘睿", "劉冠廷", "鄭凱勻", "李翊鵬", "曾野川", "林寬瑜", "陳克宇", "賴暐傑", "簡宏睿", "蕭博荃", "白晏碩", "蔡城霖", "黃沛文", "林家華", "何翌瑄", "朱育彤", "吳采霓", "何旻倩", "林昀槿", "黃語棠", "吳妤嫻", "林妤璇", "黃廷紜", "曾苡喬", "黃榆茜"]
     };
 
-    // 專屬雲端接收網址
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKTWB-lwh-VN2Ndae-QsoaZc75zzgLDpI0VK3-ofNF8WRKYdcqNMFaDUH6-jryzgst/exec';
 
     let memoryStorage = {};
@@ -222,7 +221,6 @@
     function safeSetItem(key, value) { try { localStorage.setItem(key, value); } catch(e) { memoryStorage[key] = value; } }
     function safeRemoveItem(key) { try { localStorage.removeItem(key); } catch(e) { delete memoryStorage[key]; } }
 
-    // 🌟 全新自訂警告訊息函式 (取代 alert)
     let customAlertCallback = null;
     function showCustomAlert(title, message, callback) {
         document.getElementById('custom-alert-title').innerText = title;
@@ -233,6 +231,14 @@
     window.closeCustomAlert = function() {
         document.getElementById('custom-alert-modal').style.display = 'none';
         if (customAlertCallback) customAlertCallback();
+    }
+
+    // 🌟 平板輸入法超級淨化引擎：移除所有半形/全形空白、隱形控制字元，並統一字碼標準
+    function cleanName(rawStr) {
+        if (!rawStr) return "";
+        return rawStr
+            .normalize('NFC') // 統一異體字與部首編碼
+            .replace(/[\s\u3000\u200B-\u200D\uFEFF]/g, ''); // 清除所有半形空白、全形空白與隱形零寬度字元
     }
 
     const allPuzzles = [
@@ -273,8 +279,14 @@
         return 6; 
     }
 
-    // 🌟 修改後的雲端傳送功能 (不再呼叫原生 alert)
     window.sendRecordToTeacher = function() {
+        let submitKey = `puzzleSubmitted_${currentUser.className}_${currentUser.name}`;
+        
+        if (safeGetItem(submitKey) === 'true') {
+            showCustomAlert("提示", "你的破關紀錄已經傳送過囉，不能重複傳送！", null);
+            return;
+        }
+
         if(GOOGLE_SCRIPT_URL.startsWith('http')) {
             let nowTime = new Date().toLocaleString();
             let url = GOOGLE_SCRIPT_URL + "?className=" + encodeURIComponent(currentUser.className) + "&name=" + encodeURIComponent(currentUser.name) + "&time=" + encodeURIComponent(nowTime);
@@ -283,27 +295,39 @@
             btn.innerText = "⏳ 傳送中，請稍候...";
             btn.disabled = true;
             btn.style.backgroundColor = "#95a5a6";
+            btn.style.color = "#FFFFFF";
             btn.style.boxShadow = "none";
 
             fetch(url, { mode: 'no-cors' }).then(() => {
-                showCustomAlert("🎉 恭喜破關", "你的全破關紀錄已經成功傳送給老師囉！\n請帶著榮譽券去找老師兌換獎勵！", null);
-                btn.innerText = "🎉 紀錄已成功傳送！";
+                safeSetItem(submitKey, 'true');
+                showCustomAlert("🎉 恭喜破關", "你的全破關紀錄已經成功傳送給老師囉！\n請去找老師兌換獎勵！", null);
+                btn.innerText = "✅ 紀錄已傳送（無法重複傳送）";
+                btn.style.backgroundColor = "#E0E0E0";
+                btn.style.color = "#7F8C8D";
             }).catch(err => {
                 showCustomAlert("⚠️ 傳送失敗", "傳送失敗，請檢查網路連線，然後點擊按鈕再試一次。", null);
                 btn.innerText = "📤 點我補交過關紀錄";
                 btn.disabled = false;
                 btn.style.backgroundColor = "#1DD1A1";
+                btn.style.color = "#2B2A4C";
                 btn.style.boxShadow = "0px 6px 0px #10AC84";
             });
         }
     };
 
     function enterStampCard() {
-        let name = document.getElementById('student-name').value.trim();
+        let rawInput = document.getElementById('student-name').value;
+        let name = cleanName(rawInput); // 使用超級淨化引擎清理學生輸入
+        
+        // 順便把乾淨的名字寫回輸入框，讓學生看到多餘的空白被自動消除了
+        document.getElementById('student-name').value = name;
+
         let errorDiv = document.getElementById('login-error');
         if (!name) { errorDiv.innerHTML = '❌ 請先輸入姓名喔！'; errorDiv.style.display = 'block'; return; }
+        
         let className = document.getElementById('class-select').value;
-        let validNames = studentRoster[className] || [];
+        let validNames = (studentRoster[className] || []).map(n => cleanName(n)); // 名單也同步正規化比對
+        
         if (validNames.length > 0 && !validNames.includes(name)) {
             errorDiv.innerHTML = `❌ 找不到「${name}」這個名字喔！<br>請確認班級是否選對，並輸入完整的「中文全名」。`;
             errorDiv.style.display = 'block'; return;
@@ -329,14 +353,24 @@
 
         let btn = document.getElementById('draw-puzzle-btn');
         let savedDataStr = safeGetItem(`puzzleSave_${currentUser.className}_${currentUser.name}`);
+        let isAlreadySubmitted = safeGetItem(`puzzleSubmitted_${currentUser.className}_${currentUser.name}`) === 'true';
         
         if (completedTitles.length === allPuzzles.length) {
-            btn.innerText = "📤 點我傳送全破關紀錄";
-            btn.disabled = false;
-            btn.style.backgroundColor = "#1DD1A1";
-            btn.style.color = "#2B2A4C";
-            btn.style.boxShadow = "0px 6px 0px #10AC84";
-            btn.setAttribute("onclick", "sendRecordToTeacher()");
+            if (isAlreadySubmitted) {
+                btn.innerText = "✅ 紀錄已傳送（無法重複傳送）";
+                btn.disabled = true;
+                btn.style.backgroundColor = "#E0E0E0";
+                btn.style.color = "#7F8C8D";
+                btn.style.boxShadow = "none";
+                btn.removeAttribute("onclick");
+            } else {
+                btn.innerText = "📤 點我傳送全破關紀錄";
+                btn.disabled = false;
+                btn.style.backgroundColor = "#1DD1A1";
+                btn.style.color = "#2B2A4C";
+                btn.style.boxShadow = "0px 6px 0px #10AC84";
+                btn.setAttribute("onclick", "sendRecordToTeacher()");
+            }
         } else if (savedDataStr) {
             btn.innerText = "▶ 繼續未完成的關卡";
             btn.disabled = false;
@@ -562,7 +596,6 @@
 
             let completedCount = records.filter(r => r.name === currentUser.name && r.className === currentUser.className).length;
             
-            // 🌟 取代原本的 alert，並在關閉視窗後自動傳送
             if (completedCount === 10) {
                 document.getElementById('quiz-modal').style.display = 'none';
                 showCustomAlert("🏆 最終挑戰完成", "狂賀！你已經收集到所有 10 枚印章！\n按下確定後，系統將自動幫你把紀錄傳送給老師！", function() {
